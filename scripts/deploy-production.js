@@ -63,7 +63,7 @@ try {
 
     // Verificar dependências
     console.log('📦 Verificando dependências...');
-    execSync('npm ci --production=false', { stdio: 'inherit' });
+    execSync('npm install --legacy-peer-deps', { stdio: 'inherit' });
     console.log('✅ Dependências verificadas');
 
     // Executar testes
