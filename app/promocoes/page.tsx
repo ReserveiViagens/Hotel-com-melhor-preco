@@ -1,126 +1,129 @@
 "use client"
 
-import { useState, useEffect } from "react"
-import { ArrowLeft, Phone, Clock } from "lucide-react"
+import { useState } from "react"
+import { Search, Star, ArrowLeft, MapPin, Calendar, Users, Percent, ChevronLeft, ChevronRight } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import Image from "next/image"
 import Link from "next/link"
+import ChatAgent from "@/components/chat-agent"
 
-interface Promotion {
-  id: string
-  title: string
-  description: string
-  price: number
-  originalPrice: number
-  image: string
-  discount: number
-  badge: string
-  validUntil: string
-  includes: string[]
-  highlight?: boolean
-}
+const promotions = [
+  {
+    id: 1,
+    name: "Promoférias Parque Aquático",
+    images: [
+      "/images/promoferias-parque-aquatico.jpeg",
+      "/images/lagoa-termas-parque.jpeg",
+      "/images/diroma-acqua-park.jpeg",
+      "/images/hot-park.jpeg",
+      "/images/water-park.jpeg",
+    ],
+    rating: 5,
+    price: 149.99,
+    originalPrice: 249.99,
+    location: "Caldas Novas, GO",
+    duration: "3 dias / 2 noites",
+    capacity: "Até 4 pessoas",
+    description:
+      "Pacote completo com hotel + parque aquático + estacionamento gratuito. Diversão garantida para toda família!",
+    discount: "40% OFF",
+    features: ["Hotel 4 estrelas", "Parque Aquático", "Wi-Fi Gratuito", "Piscinas Termais"],
+    validUntil: "31/03/2024",
+  },
+  {
+    id: 2,
+    name: "Melhor Idade Caldas Novas",
+    images: [
+      "/images/melhor-idade-caldas-novas.jpeg",
+      "/placeholder.svg?width=400&height=200",
+      "/placeholder.svg?width=400&height=200",
+    ],
+    rating: 5,
+    price: 129.99,
+    originalPrice: 199.99,
+    location: "Caldas Novas, GO",
+    duration: "4 dias / 3 noites",
+    capacity: "Até 5 pessoas",
+    description: "Pacote especial para a melhor idade com atividades relaxantes e águas termais terapêuticas.",
+    discount: "35% OFF",
+    features: ["Hotel Confortável", "Águas Termais", "Atividades Especiais", "Parque Aquático"],
+    validUntil: "30/04/2024",
+  },
+  {
+    id: 3,
+    name: "Fim de Semana Dourado",
+    images: [
+      "/images/fim-de-semana-dourado.jpeg",
+      "/placeholder.svg?width=400&height=200",
+      "/placeholder.svg?width=400&height=200",
+    ],
+    rating: 4,
+    price: 199.99,
+    originalPrice: 299.99,
+    location: "Rio Quente, GO",
+    duration: "2 dias / 1 noite",
+    capacity: "Até 5 pessoas",
+    description: "Escapada romântica com estacionamento gratuito e acesso ao parque aquático.",
+    discount: "33% OFF",
+    features: ["Hotel Luxo", "Estacionamento Gratuito", "Wi-Fi Gratuito", "Parque Aquático"],
+    validUntil: "15/04/2024",
+  },
+  {
+    id: 4,
+    name: "Pacote Família Completa",
+    images: [
+      "/images/pacote-familia-completa.jpeg",
+      "/placeholder.svg?width=400&height=200",
+      "/placeholder.svg?width=400&height=200",
+    ],
+    rating: 5,
+    price: 179.99,
+    originalPrice: 279.99,
+    location: "Caldas Novas, GO",
+    duration: "3 dias / 2 noites",
+    capacity: "Até 6 pessoas",
+    description: "Ideal para famílias grandes! Hotel espaçoso + múltiplos parques aquáticos.",
+    discount: "36% OFF",
+    features: ["Apartamento Família", "Parque Aquático", "Wi-Fi Gratuito", "Atividades Kids"],
+    validUntil: "31/05/2024",
+  },
+]
 
 export default function PromocoesPage() {
-  const [isLoading, setIsLoading] = useState(true)
-  const [timeLeft, setTimeLeft] = useState({ hours: 23, minutes: 45, seconds: 30 })
+  const [searchQuery, setSearchQuery] = useState("")
+  const [filteredPromotions, setFilteredPromotions] = useState(promotions)
+  const [currentImageIndexes, setCurrentImageIndexes] = useState<{ [key: number]: number }>({})
 
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setIsLoading(false)
-    }, 1500)
+  const handleSearch = (query: string) => {
+    setSearchQuery(query)
+    if (query.trim() === "") {
+      setFilteredPromotions(promotions)
+    } else {
+      const filtered = promotions.filter(
+        (promo) =>
+          promo.name.toLowerCase().includes(query.toLowerCase()) ||
+          promo.location.toLowerCase().includes(query.toLowerCase()) ||
+          promo.features.some((feature) => feature.toLowerCase().includes(query.toLowerCase())),
+      )
+      setFilteredPromotions(filtered)
+    }
+  }
 
-    return () => clearTimeout(timer)
-  }, [])
-
-  useEffect(() => {
-    const countdown = setInterval(() => {
-      setTimeLeft((prev) => {
-        if (prev.seconds > 0) {
-          return { ...prev, seconds: prev.seconds - 1 }
-        } else if (prev.minutes > 0) {
-          return { ...prev, minutes: prev.minutes - 1, seconds: 59 }
-        } else if (prev.hours > 0) {
-          return { hours: prev.hours - 1, minutes: 59, seconds: 59 }
-        }
-        return prev
-      })
-    }, 1000)
-
-    return () => clearInterval(countdown)
-  }, [])
-
-  const promotions: Promotion[] = [
-    {
-      id: "promoferias-20off",
-      title: "PROMOFÉRIAS Hotel + Parque Aquático",
-      description:
-        "Sinta a magia de Caldas Novas! Pacote completo com hotel 4 estrelas + acesso a parque aquático com estacionamento gratuito incluso.",
-      price: 149,
-      originalPrice: 186,
-      image: "/images/promoferias-parque-aquatico.jpeg",
-      discount: 20,
-      badge: "PROMOFÉRIAS",
-      validUntil: "31/01/2025",
-      includes: ["Hotel 4 estrelas", "Parque aquático", "Estacionamento Gratuito", "Wi-Fi grátis"],
-      highlight: true,
-    },
-    {
-      id: "ilhas-lago-package",
-      title: "Ilhas do Lago Resort + Parque Aquático",
-      description: "Hospedagem sofisticada no Ilhas do Lago com acesso a parque aquático e spa relaxante.",
-      price: 320,
-      originalPrice: 380,
-      image: "/images/ilhas-do-lago-resort.jpg",
-      discount: 15,
-      badge: "Mais Vendido",
-      validUntil: "15/02/2025",
-      includes: ["Resort 5 estrelas", "Spa incluso", "Parque aquático", "Área de relaxamento"],
-    },
-    {
-      id: "melhor-idade",
-      title: "Pacote Melhor Idade Caldas Novas",
-      description:
-        "Condições especiais para grupos da melhor idade com atividades adaptadas e acompanhamento especializado.",
-      price: 210,
-      originalPrice: 260,
-      image: "/images/melhor-idade-caldas-novas.jpeg",
-      discount: 20,
-      badge: "Melhor Idade",
-      validUntil: "28/02/2025",
-      includes: [
-        "Momentos de lazer e convivência",
-        "Atividades recreativas adaptadas",
-        "Tratamento em Piscinas termais",
-        "Hospedagem em hotel com estrutura adaptada",
-      ],
-    },
-    {
-      id: "fim-semana-dourado",
-      title: "Pacote Fim de Semana Dourado",
-      description: "Hotel + Parque com condições imperdíveis para sua escapada de fim de semana perfeita!",
-      price: 299,
-      originalPrice: 370,
-      image: "/images/fim-de-semana-dourado.jpeg",
-      discount: 20,
-      badge: "Fim de Semana",
-      validUntil: "Ver disponibilidade grátis",
-      includes: ["Diárias a partir", "Parque aquático", "Atividades grátis oferecidas pelo hotel", "Late check-out"],
-    },
-    {
-      id: "familia-completa",
-      title: "Pacote Família Completa",
-      description: "Diversão garantida para toda família com crianças até 12 anos grátis e atividades especiais.",
-      price: 450,
-      originalPrice: 580,
-      image: "/images/pacote-familia-completa.jpeg",
-      discount: 22,
-      badge: "Família",
-      validUntil: "31/03/2025",
-      includes: ["Entrada no parque aquático", "Kids club", "Atividades familiares", "Quarto família"],
-    },
-  ]
+  const handleImageChange = (promoId: number, direction: "next" | "prev", gallerySize: number) => {
+    setCurrentImageIndexes((prev) => {
+      const currentIndex = prev[promoId] || 0
+      let newIndex = direction === "next" ? currentIndex + 1 : currentIndex - 1
+      if (newIndex < 0) {
+        newIndex = gallerySize - 1
+      } else if (newIndex >= gallerySize) {
+        newIndex = 0
+      }
+      return { ...prev, [promoId]: newIndex }
+    })
+  }
 
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat("pt-BR", {
@@ -129,231 +132,212 @@ export default function PromocoesPage() {
     }).format(price)
   }
 
-  if (isLoading) {
-    return (
-      <div className="fixed inset-0 bg-gradient-to-br from-orange-500 to-red-600 flex flex-col items-center justify-center z-50">
-        <div className="relative mb-8">
-          <div className="w-32 h-32 rounded-full bg-white/20 animate-pulse"></div>
-          <div className="absolute inset-0 flex items-center justify-center">
-            <div className="text-6xl animate-bounce">🏷️</div>
-          </div>
-        </div>
-        <div className="text-white text-center">
-          <h2 className="text-2xl font-bold mb-2">Carregando Promoções</h2>
-          <p className="text-orange-100">Preparando as melhores ofertas para você...</p>
-        </div>
-        <div className="mt-8 w-48 h-1 bg-white/20 rounded-full overflow-hidden">
-          <div className="h-full bg-white rounded-full animate-pulse"></div>
-        </div>
-      </div>
-    )
+  const renderStars = (count: number) => {
+    return Array.from({ length: 5 }, (_, i) => (
+      <Star key={i} className={`w-4 h-4 ${i < count ? "fill-yellow-400 text-yellow-400" : "text-gray-300"}`} />
+    ))
+  }
+
+  const handleVerDetalhes = (promo: any) => {
+    const chatButton = document.querySelector("[data-chat-trigger]") as HTMLElement
+    if (chatButton) {
+      chatButton.click()
+    }
+    setTimeout(() => {
+      const chatInput = document.querySelector('input[placeholder*="mensagem"]') as HTMLInputElement
+      if (chatInput) {
+        const message = `Olá Serena! Estou interessado na promoção ${promo.name}! Vi que está com ${promo.discount} por ${formatPrice(promo.price)} por dia. Inclui ${promo.features.join(", ")}. Como posso aproveitar essa oferta? Válida até ${promo.validUntil}.`
+        chatInput.value = message
+        const sendButton = chatInput.parentElement?.querySelector('button[type="submit"]') as HTMLElement
+        if (sendButton) {
+          sendButton.click()
+        }
+      }
+    }, 500)
   }
 
   return (
-    <div className="max-w-md mx-auto bg-gray-50 min-h-screen relative">
-      <div className="animate-in fade-in duration-500">
-        {/* Header */}
-        <header className="bg-gradient-to-br from-orange-500 to-red-600 text-white p-6 rounded-b-3xl shadow-lg">
-          <div className="flex items-center gap-3 mb-4">
-            <Link href="/">
-              <Button variant="ghost" size="sm" className="text-white hover:bg-white/20 p-2">
-                <ArrowLeft className="w-5 h-5" />
-              </Button>
-            </Link>
+    <div className="max-w-md mx-auto bg-gray-50 min-h-screen">
+      <header className="bg-gradient-to-br from-orange-600 to-red-600 text-white p-6 rounded-b-3xl shadow-lg">
+        <div className="flex items-center gap-3 mb-4">
+          <Link href="/">
+            <Button variant="ghost" size="sm" className="text-white hover:bg-white/20 p-2">
+              <ArrowLeft className="w-5 h-5" />
+            </Button>
+          </Link>
+          <div className="flex items-center gap-3">
             <Image
-              src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/favicon-reservei-viagens-VVm0zxcolWbkv9Lf5Yj0PUoxLJrARl.png"
+              src="/logo-reservei.png"
               alt="Reservei Viagens"
-              width={40}
-              height={40}
+              width={32}
+              height={32}
               className="rounded-full bg-white/20 p-1"
             />
-            <h1 className="text-2xl font-bold tracking-tight">Promoções Especiais</h1>
+            <h1 className="text-xl font-bold">Promoções Especiais</h1>
           </div>
+        </div>
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+          <Input
+            type="text"
+            placeholder="Buscar promoções..."
+            value={searchQuery}
+            onChange={(e) => handleSearch(e.target.value)}
+            className="pl-10 bg-white/95 border-0 rounded-xl shadow-sm"
+          />
+        </div>
+      </header>
 
-          {/* Countdown Timer */}
-          <div className="bg-white/20 backdrop-blur-sm rounded-2xl p-4 mb-4">
-            <h2 className="text-lg font-bold mb-2 flex items-center gap-2">⏰ Oferta Relâmpago!</h2>
-            <div className="flex gap-2 justify-center">
-              <div className="bg-white/30 rounded-lg p-2 text-center min-w-[50px]">
-                <div className="text-xl font-bold">{timeLeft.hours.toString().padStart(2, "0")}</div>
-                <div className="text-xs">Horas</div>
-              </div>
-              <div className="bg-white/30 rounded-lg p-2 text-center min-w-[50px]">
-                <div className="text-xl font-bold">{timeLeft.minutes.toString().padStart(2, "0")}</div>
-                <div className="text-xs">Min</div>
-              </div>
-              <div className="bg-white/30 rounded-lg p-2 text-center min-w-[50px]">
-                <div className="text-xl font-bold">{timeLeft.seconds.toString().padStart(2, "0")}</div>
-                <div className="text-xs">Seg</div>
-              </div>
-            </div>
+      <div className="p-6 space-y-6 pb-24">
+        {filteredPromotions.length === 0 ? (
+          <div className="text-center py-12">
+            <p className="text-gray-500 mb-4">Nenhuma promoção encontrada</p>
+            <Button onClick={() => handleSearch("")} variant="outline">
+              Ver todas as promoções
+            </Button>
           </div>
-        </header>
-
-        {/* Main Content */}
-        <div className="p-6 space-y-6">
-          {/* Urgency Banner */}
-          <Card className="bg-gradient-to-r from-red-500 to-pink-500 text-white">
-            <CardContent className="p-4 text-center">
-              <h3 className="font-bold text-lg mb-2">🔥 ÚLTIMAS HORAS!</h3>
-              <p className="text-sm mb-3">Mais de 100 pessoas reservaram hoje</p>
-              <Badge className="bg-white text-red-600 font-bold animate-pulse">Garante já sua promoção!</Badge>
-            </CardContent>
-          </Card>
-
-          {/* Promotions List */}
-          <div className="space-y-6">
-            {promotions.map((promo, index) => (
+        ) : (
+          filteredPromotions.map((promo) => {
+            const currentIndex = currentImageIndexes[promo.id] || 0
+            return (
               <Card
                 key={promo.id}
-                className={`overflow-hidden hover:shadow-xl transition-all duration-300 hover:scale-[1.02] relative ${
-                  promo.highlight
-                    ? "border-4 border-yellow-400 shadow-lg"
-                    : "border-2 border-transparent hover:border-orange-200"
-                }`}
+                className="overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300 border-2 border-orange-200"
               >
-                {promo.highlight && (
-                  <div className="absolute top-0 left-0 right-0 bg-yellow-400 text-black text-center py-1 text-sm font-bold z-20">
-                    ⭐ OFERTA MAIS POPULAR ⭐
-                  </div>
-                )}
-
-                <Badge className="absolute top-3 right-3 bg-red-500 text-white z-10 animate-pulse">
-                  -{promo.discount}% OFF
-                </Badge>
-
-                <div className={`aspect-video relative overflow-hidden ${promo.highlight ? "mt-8" : ""}`}>
-                  <img
-                    src={promo.image || "/placeholder.svg"}
-                    alt={promo.title}
-                    className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+                <div className="relative group">
+                  <Image
+                    src={promo.images[currentIndex] || "/placeholder.svg"}
+                    alt={promo.name}
+                    width={400}
+                    height={200}
+                    className="w-full h-48 object-cover transition-transform duration-300 group-hover:scale-105"
                   />
-                  <Badge className="absolute top-3 left-3 bg-orange-500 text-white font-bold">{promo.badge}</Badge>
+                  <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-between px-2">
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      className="text-white bg-black/50 hover:bg-black/70 rounded-full h-8 w-8"
+                      onClick={() => handleImageChange(promo.id, "prev", promo.images.length)}
+                    >
+                      <ChevronLeft className="w-5 h-5" />
+                    </Button>
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      className="text-white bg-black/50 hover:bg-black/70 rounded-full h-8 w-8"
+                      onClick={() => handleImageChange(promo.id, "next", promo.images.length)}
+                    >
+                      <ChevronRight className="w-5 h-5" />
+                    </Button>
+                  </div>
+                  <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1.5">
+                    {promo.images.map((_, index) => (
+                      <div
+                        key={index}
+                        className={`w-2 h-2 rounded-full transition-all ${
+                          index === currentIndex ? "bg-white scale-125" : "bg-white/50"
+                        }`}
+                      />
+                    ))}
+                  </div>
+                  <Badge className="absolute top-3 left-3 bg-red-500 text-white text-lg px-3 py-1">
+                    🔥 {promo.discount}
+                  </Badge>
+                  <div className="absolute top-3 right-3 flex">{renderStars(promo.rating)}</div>
+                  <div className="absolute bottom-3 right-3 bg-black/70 text-white px-2 py-1 rounded text-xs">
+                    Válido até {promo.validUntil}
+                  </div>
                 </div>
 
                 <CardContent className="p-6">
-                  <h3 className="font-bold text-xl mb-2">{promo.title}</h3>
+                  <h3 className="font-bold text-lg mb-1 text-orange-800">{promo.name}</h3>
+                  <div className="flex items-center gap-1 text-gray-600 text-sm mb-3">
+                    <MapPin className="w-4 h-4" />
+                    <span>{promo.location}</span>
+                  </div>
                   <p className="text-gray-600 text-sm mb-4 leading-relaxed">{promo.description}</p>
-
-                  {/* Includes */}
-                  <div className="mb-4">
-                    <h4 className="font-semibold text-sm mb-2 text-green-700">✅ O que está incluso:</h4>
-                    <div className="grid grid-cols-2 gap-1">
-                      {promo.includes.map((item) => (
-                        <div key={item} className="text-xs text-gray-600 flex items-center gap-1">
-                          <span className="text-green-500">•</span>
-                          {item}
-                        </div>
-                      ))}
+                  <div className="grid grid-cols-2 gap-3 mb-4">
+                    <div className="flex items-center gap-2 text-sm text-gray-600">
+                      <Calendar className="w-4 h-4" />
+                      <span>{promo.duration}</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-sm text-gray-600">
+                      <Users className="w-4 h-4" />
+                      <span>{promo.capacity}</span>
                     </div>
                   </div>
-
-                  {/* Validity */}
-                  <div className="flex items-center gap-2 mb-4 text-sm text-gray-600">
-                    <Clock className="w-4 h-4" />
-                    <span>Válido até: {promo.validUntil}</span>
-                  </div>
-
-                  <div className="border-t pt-4">
-                    <div className="flex items-center justify-between mb-4">
-                      <div>
-                        <span className="text-lg text-gray-400 line-through mr-2">
-                          {formatPrice(promo.originalPrice)}
-                        </span>
-                        <div className="text-3xl font-bold text-green-600">{formatPrice(promo.price)}</div>
-                        {promo.id === "ilhas-lago-package" ? (
-                          <p className="text-xs text-gray-500">diárias a partir de</p>
-                        ) : promo.id === "melhor-idade" ? (
-                          <p className="text-xs text-gray-500">diárias a partir de</p>
-                        ) : promo.id === "fim-semana-dourado" ? (
-                          <p className="text-xs text-gray-500">diárias a partir de</p>
-                        ) : promo.id === "familia-completa" ? (
-                          <p className="text-xs text-gray-500">diárias a partir de</p>
-                        ) : (
-                          <p className="text-xs text-gray-500">por pessoa</p>
-                        )}
-                      </div>
-                      <div className="text-right">
-                        <p className="text-xs text-gray-500 mb-1">Você economiza</p>
-                        <p className="text-xl font-bold text-red-600">
-                          {formatPrice(promo.originalPrice - promo.price)}
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="space-y-2">
-                      <Button
-                        className={`w-full font-bold py-3 text-lg ${
-                          promo.highlight
-                            ? "bg-yellow-500 hover:bg-yellow-600 text-black"
-                            : "bg-green-500 hover:bg-green-600 text-white"
-                        }`}
-                        onClick={() =>
-                          window.open(
-                            `https://wa.me/5564993197555?text=Olá! Quero aproveitar a promoção ${promo.title} com ${promo.discount}% de desconto!`,
-                            "_blank",
-                          )
-                        }
+                  <div className="flex flex-wrap gap-2 mb-4">
+                    {promo.features.map((feature, index) => (
+                      <div
+                        key={index}
+                        className="flex items-center gap-1 bg-orange-50 text-orange-700 px-2 py-1 rounded-full text-xs"
                       >
-                        {promo.highlight ? "⭐ QUERO ESTA OFERTA ESPECIAL!" : `💚 APROVEITAR ${promo.discount}% OFF`}
-                      </Button>
+                        <Percent className="w-3 h-3" />
+                        <span>{feature}</span>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <span className="text-gray-400 line-through text-sm">De {formatPrice(promo.originalPrice)}</span>
+                      <div className="flex items-baseline gap-1">
+                        <span className="text-sm text-gray-600">A partir de</span>
+                        <span className="text-3xl font-bold text-red-600">{formatPrice(promo.price)}</span>
+                      </div>
+                      <p className="text-xs text-gray-500">por dia</p>
+                    </div>
+                    <div className="flex flex-col gap-2">
+                      <a
+                        href="https://wa.me/5564993197555?text=Olá! Gostaria de aproveitar esta promoção especial!"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        <Button className="bg-red-500 hover:bg-red-600 text-white font-bold px-4 py-2 rounded-full text-sm animate-pulse">
+                          🔥 Quero Esta Oferta!
+                        </Button>
+                      </a>
                       <Button
                         variant="outline"
-                        className="w-full border-orange-500 text-orange-600 hover:bg-orange-50"
-                        onClick={() => alert(`Detalhes completos da promoção ${promo.title}`)}
+                        size="sm"
+                        className="text-xs bg-transparent px-2 py-1 h-7"
+                        onClick={() => handleVerDetalhes(promo)}
                       >
-                        Ver Detalhes Completos
+                        Ver Detalhes
                       </Button>
                     </div>
                   </div>
                 </CardContent>
               </Card>
-            ))}
-          </div>
-
-          {/* Final CTA */}
-          <Card className="bg-gradient-to-br from-purple-600 to-pink-600 text-white">
-            <CardContent className="p-6 text-center">
-              <h3 className="text-xl font-bold mb-3">🎁 Promoção Exclusiva WhatsApp!</h3>
-              <p className="mb-4">Fale conosco agora e ganhe 5% de desconto adicional em qualquer pacote!</p>
-              <Button
-                className="bg-white text-purple-600 hover:bg-gray-100 font-bold px-8 py-3"
-                onClick={() =>
-                  window.open(
-                    "https://wa.me/5564993197555?text=Olá! Quero o desconto adicional de 5% nas promoções!",
-                    "_blank",
-                  )
-                }
-              >
-                📱 Ganhar Desconto Extra
-              </Button>
-            </CardContent>
-          </Card>
-
-          {/* Back Button */}
-          <div className="flex justify-center pt-6 pb-20">
-            <Link href="/">
-              <Button
-                variant="outline"
-                className="text-gray-600 hover:text-blue-600 border-gray-300 hover:border-blue-300"
-              >
-                <ArrowLeft className="w-4 h-4 mr-2" />
-                Voltar ao Início
-              </Button>
-            </Link>
-          </div>
-        </div>
+            )
+          })
+        )}
       </div>
 
-      {/* WhatsApp Float Button */}
-      <a
-        href="https://wa.me/5564993197555?text=Olá! Gostaria de informações sobre as promoções especiais."
-        target="_blank"
-        rel="noopener noreferrer"
-        className="fixed bottom-20 right-4 w-14 h-14 bg-green-500 hover:bg-green-600 rounded-full flex items-center justify-center shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-110 z-50 animate-pulse"
-      >
-        <Phone className="w-7 h-7 text-white" />
-      </a>
+      <ChatAgent />
+
+      <nav className="fixed bottom-0 left-1/2 transform -translate-x-1/2 w-full max-w-md bg-white/95 backdrop-blur-sm border-t shadow-lg">
+        <div className="flex justify-around py-2">
+          {[
+            { icon: "🏠", label: "Início", href: "/" },
+            { icon: "🏨", label: "Hotéis", href: "/hoteis" },
+            { icon: "🏷️", label: "Promoções", href: "/promocoes", active: true },
+            { icon: "📞", label: "Contato", href: "/contato" },
+          ].map((item, index) => (
+            <Link key={index} href={item.href}>
+              <button
+                className={`flex flex-col items-center py-2 px-4 rounded-lg transition-all duration-200 ${
+                  item.active
+                    ? "text-orange-600 bg-orange-50"
+                    : "text-gray-500 hover:text-orange-600 hover:bg-orange-50"
+                }`}
+              >
+                <span className="text-xl mb-1">{item.icon}</span>
+                <span className="text-xs font-medium">{item.label}</span>
+              </button>
+            </Link>
+          ))}
+        </div>
+      </nav>
     </div>
   )
 }

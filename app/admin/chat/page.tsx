@@ -1,359 +1,545 @@
 "use client"
 
-import { useState, useEffect } from "react"
-import { Card, CardContent, CardHeader } from "@/components/ui/card"
+import { useState, useEffect, useRef } from "react"
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
+import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
-import { MessageSquare, Users, Clock, Phone, Mail, Settings, BarChart3, Download, Search } from "lucide-react"
+import { MessageSquare, Users, Clock, Phone, Mail, Settings, BarChart3, Download, Search, Activity, Send, Bot, User, Star, ThumbsUp, ThumbsDown, AlertTriangle, CheckCircle } from "lucide-react"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import N8NIntegration from "@/components/n8n-integration"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Textarea } from "@/components/ui/textarea"
+import { ScrollArea } from "@/components/ui/scroll-area"
+import { Loader2 } from "lucide-react"
+
+interface ChatMessage {
+  id: string
+  type: 'user' | 'assistant'
+  content: string
+  timestamp: string
+  userId?: string
+  userName?: string
+  rating?: number
+  tokens?: number
+}
 
 interface ChatSession {
   id: string
-  customerName: string
-  customerEmail: string
-  customerPhone: string
-  status: "active" | "waiting" | "closed"
-  startTime: Date
-  lastMessage: string
-  messageCount: number
-  agent?: string
+  userId: string
+  userName: string
+  userEmail: string
+  startTime: string
+  endTime?: string
+  status: 'active' | 'completed' | 'transferred'
+  messages: ChatMessage[]
+  satisfaction?: number
+  tags: string[]
 }
 
-export default function ChatAdminPage() {
+interface ChatStats {
+  totalSessions: number
+  activeSessions: number
+  avgResponseTime: number
+  satisfactionRate: number
+  tokensUsed: number
+  tokensLimit: number
+  commonQuestions: Array<{
+    question: string
+    count: number
+  }>
+  dailyStats: Array<{
+    date: string
+    sessions: number
+    satisfaction: number
+  }>
+}
+
+export default function AdminChatPage() {
   const [sessions, setSessions] = useState<ChatSession[]>([])
   const [selectedSession, setSelectedSession] = useState<ChatSession | null>(null)
-  const [filterStatus, setFilterStatus] = useState<string>("all")
-  const [searchQuery, setSearchQuery] = useState("")
+  const [stats, setStats] = useState<ChatStats | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
+  const [success, setSuccess] = useState('')
+  const [activeTab, setActiveTab] = useState('live')
+  const [newMessage, setNewMessage] = useState('')
+  const [sending, setSending] = useState(false)
+  const [aiConfig, setAiConfig] = useState({
+    model: 'gpt-3.5-turbo',
+    temperature: 0.7,
+    maxTokens: 500,
+    systemPrompt: 'Você é um assistente especializado em turismo e reservas de hotéis. Seja prestativo e forneça informações precisas sobre nossos serviços.',
+    autoResponse: true,
+    responseDelay: 2000
+  })
+  const messagesEndRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    // Load mock data
-    const mockSessions: ChatSession[] = [
-      {
-        id: "session_001",
-        customerName: "Maria Silva",
-        customerEmail: "maria@email.com",
-        customerPhone: "(64) 99999-1111",
-        status: "active",
-        startTime: new Date(Date.now() - 300000), // 5 minutes ago
-        lastMessage: "Gostaria de informações sobre pacotes para família",
-        messageCount: 8,
-        agent: "Ana Costa",
-      },
-      {
-        id: "session_002",
-        customerName: "João Santos",
-        customerEmail: "joao@email.com",
-        customerPhone: "(64) 99999-2222",
-        status: "waiting",
-        startTime: new Date(Date.now() - 600000), // 10 minutes ago
-        lastMessage: "Qual o preço do hotel DiRoma?",
-        messageCount: 3,
-      },
-      {
-        id: "session_003",
-        customerName: "Ana Oliveira",
-        customerEmail: "ana@email.com",
-        customerPhone: "(64) 99999-3333",
-        status: "closed",
-        startTime: new Date(Date.now() - 3600000), // 1 hour ago
-        lastMessage: "Obrigada! Reserva confirmada.",
-        messageCount: 15,
-        agent: "Carlos Lima",
-      },
-    ]
-    setSessions(mockSessions)
+    loadChatData()
+    // Atualizar dados a cada 30 segundos
+    const interval = setInterval(loadChatData, 30000)
+    return () => clearInterval(interval)
   }, [])
 
-  const filteredSessions = sessions.filter((session) => {
-    const matchesStatus = filterStatus === "all" || session.status === filterStatus
-    const matchesSearch =
-      searchQuery === "" ||
-      session.customerName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      session.customerEmail.toLowerCase().includes(searchQuery.toLowerCase())
-    return matchesStatus && matchesSearch
-  })
+  useEffect(() => {
+    scrollToBottom()
+  }, [selectedSession?.messages])
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "active":
-        return "bg-green-100 text-green-800"
-      case "waiting":
-        return "bg-yellow-100 text-yellow-800"
-      case "closed":
-        return "bg-gray-100 text-gray-800"
-      default:
-        return "bg-gray-100 text-gray-800"
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+  }
+
+  const loadChatData = async () => {
+    try {
+      const token = localStorage.getItem('adminToken')
+      if (!token) return
+
+      // Simular dados do chat
+      const mockSessions: ChatSession[] = [
+        {
+          id: '1',
+          userId: '1',
+          userName: 'João Silva',
+          userEmail: 'joao@email.com',
+          startTime: new Date().toISOString(),
+          status: 'active',
+          messages: [
+            {
+              id: '1',
+              type: 'user',
+              content: 'Olá, gostaria de saber sobre disponibilidade de hotéis em Caldas Novas',
+              timestamp: new Date().toISOString()
+            },
+            {
+              id: '2',
+              type: 'assistant',
+              content: 'Olá! Claro, posso ajudá-lo com informações sobre hotéis em Caldas Novas. Temos várias opções disponíveis. Para qual período você gostaria de fazer a reserva?',
+              timestamp: new Date(Date.now() + 30000).toISOString(),
+              tokens: 45
+            },
+            {
+              id: '3',
+              type: 'user',
+              content: 'Para o final de semana do dia 15 de março',
+              timestamp: new Date(Date.now() + 60000).toISOString()
+            }
+          ],
+          tags: ['reserva', 'caldas-novas'],
+          satisfaction: 5
+        },
+        {
+          id: '2',
+          userId: '2',
+          userName: 'Maria Santos',
+          userEmail: 'maria@email.com',
+          startTime: new Date(Date.now() - 3600000).toISOString(),
+          endTime: new Date(Date.now() - 1800000).toISOString(),
+          status: 'completed',
+          messages: [
+            {
+              id: '4',
+              type: 'user',
+              content: 'Preciso cancelar minha reserva',
+              timestamp: new Date(Date.now() - 3600000).toISOString()
+            },
+            {
+              id: '5',
+              type: 'assistant',
+              content: 'Entendo que você precisa cancelar sua reserva. Posso ajudá-lo com isso. Você poderia me fornecer o número da sua reserva?',
+              timestamp: new Date(Date.now() - 3570000).toISOString(),
+              tokens: 38
+            }
+          ],
+          tags: ['cancelamento'],
+          satisfaction: 4
+        }
+      ]
+
+      const mockStats: ChatStats = {
+        totalSessions: 156,
+        activeSessions: 3,
+        avgResponseTime: 2.3,
+        satisfactionRate: 4.6,
+        tokensUsed: 12500,
+        tokensLimit: 50000,
+        commonQuestions: [
+          { question: 'Disponibilidade de hotéis', count: 45 },
+          { question: 'Cancelamento de reserva', count: 32 },
+          { question: 'Informações sobre preços', count: 28 },
+          { question: 'Check-in e check-out', count: 21 }
+        ],
+        dailyStats: [
+          { date: '2024-01-15', sessions: 23, satisfaction: 4.5 },
+          { date: '2024-01-16', sessions: 31, satisfaction: 4.7 },
+          { date: '2024-01-17', sessions: 28, satisfaction: 4.6 }
+        ]
+      }
+
+      setSessions(mockSessions)
+      setStats(mockStats)
+      if (!selectedSession && mockSessions.length > 0) {
+        setSelectedSession(mockSessions[0])
+      }
+    } catch (error) {
+      console.error('Erro ao carregar dados do chat:', error)
+      setError('Erro ao carregar dados do chat')
+    } finally {
+      setLoading(false)
     }
   }
 
-  const getStatusLabel = (status: string) => {
-    switch (status) {
-      case "active":
-        return "Ativo"
-      case "waiting":
-        return "Aguardando"
-      case "closed":
-        return "Finalizado"
-      default:
-        return status
+  const handleSendMessage = async () => {
+    if (!newMessage.trim() || !selectedSession) return
+
+    setSending(true)
+    try {
+      const userMessage: ChatMessage = {
+        id: Date.now().toString(),
+        type: 'user',
+        content: newMessage,
+        timestamp: new Date().toISOString(),
+        userId: 'admin',
+        userName: 'Administrador'
+      }
+
+      // Adicionar mensagem do usuário
+      const updatedSession = {
+        ...selectedSession,
+        messages: [...selectedSession.messages, userMessage]
+      }
+      setSelectedSession(updatedSession)
+      setSessions(prev => prev.map(s => s.id === selectedSession.id ? updatedSession : s))
+      setNewMessage('')
+
+      // Simular resposta da IA (em produção, fazer chamada para API)
+      if (aiConfig.autoResponse) {
+        setTimeout(async () => {
+          const aiResponse = await generateAIResponse(newMessage)
+          const aiMessage: ChatMessage = {
+            id: (Date.now() + 1).toString(),
+            type: 'assistant',
+            content: aiResponse.content,
+            timestamp: new Date().toISOString(),
+            tokens: aiResponse.tokens
+          }
+
+          const finalSession = {
+            ...updatedSession,
+            messages: [...updatedSession.messages, aiMessage]
+          }
+          setSelectedSession(finalSession)
+          setSessions(prev => prev.map(s => s.id === selectedSession.id ? finalSession : s))
+        }, aiConfig.responseDelay)
+      }
+    } catch (error) {
+      setError('Erro ao enviar mensagem')
+    } finally {
+      setSending(false)
     }
   }
 
-  const formatTime = (date: Date) => {
-    const now = new Date()
-    const diff = now.getTime() - date.getTime()
-    const minutes = Math.floor(diff / 60000)
-    const hours = Math.floor(minutes / 60)
-
-    if (hours > 0) {
-      return `${hours}h ${minutes % 60}min atrás`
+  const generateAIResponse = async (userMessage: string) => {
+    // Em produção, fazer chamada real para OpenAI
+    const responses = [
+      'Entendo sua solicitação. Posso ajudá-lo com mais detalhes sobre isso.',
+      'Claro! Vou verificar essas informações para você.',
+      'Essa é uma ótima pergunta. Deixe-me buscar os dados mais atualizados.',
+      'Posso sim te ajudar com isso. Você gostaria de mais informações específicas?'
+    ]
+    
+    return {
+      content: responses[Math.floor(Math.random() * responses.length)],
+      tokens: Math.floor(Math.random() * 50) + 20
     }
-    return `${minutes}min atrás`
+  }
+
+  const handleRateMessage = async (messageId: string, rating: number) => {
+    // Implementar avaliação de mensagem
+    console.log('Rating message:', messageId, rating)
+  }
+
+  const handleTransferToHuman = async (sessionId: string) => {
+    try {
+      const token = localStorage.getItem('adminToken')
+      if (!token) return
+
+      // Implementar transferência para atendente humano
+      setSuccess('Conversa transferida para atendente humano')
+    } catch (error) {
+      setError('Erro ao transferir conversa')
+    }
+  }
+
+  const formatTime = (timestamp: string) => {
+    return new Date(timestamp).toLocaleTimeString('pt-BR', {
+      hour: '2-digit',
+      minute: '2-digit'
+    })
+  }
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 className="h-8 w-8 animate-spin" />
+      </div>
+    )
   }
 
   return (
-    <div className="max-w-7xl mx-auto p-6 space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Painel de Chat</h1>
-          <p className="text-gray-600">Gerencie conversas e integrações com N8N</p>
+          <h1 className="text-3xl font-bold text-gray-900">Chat com IA</h1>
+          <p className="text-gray-600">Sistema de atendimento inteligente</p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" size="sm">
-            <Download className="w-4 h-4 mr-2" />
-            Exportar
+          <Button variant="outline">
+            <Download className="h-4 w-4 mr-2" />
+            Exportar Conversas
           </Button>
-          <Button size="sm">
-            <Settings className="w-4 h-4 mr-2" />
-            Configurações
+          <Button variant="outline">
+            <Settings className="h-4 w-4 mr-2" />
+            Configurações IA
           </Button>
         </div>
       </div>
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600">Chats Ativos</p>
-                <p className="text-2xl font-bold text-green-600">
-                  {sessions.filter((s) => s.status === "active").length}
-                </p>
-              </div>
-              <MessageSquare className="w-8 h-8 text-green-600" />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600">Aguardando</p>
-                <p className="text-2xl font-bold text-yellow-600">
-                  {sessions.filter((s) => s.status === "waiting").length}
-                </p>
-              </div>
-              <Clock className="w-8 h-8 text-yellow-600" />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600">Finalizados</p>
-                <p className="text-2xl font-bold text-gray-600">
-                  {sessions.filter((s) => s.status === "closed").length}
-                </p>
-              </div>
-              <Users className="w-8 h-8 text-gray-600" />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600">Total Hoje</p>
-                <p className="text-2xl font-bold text-blue-600">{sessions.length}</p>
-              </div>
-              <BarChart3 className="w-8 h-8 text-blue-600" />
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Main Content */}
-      <Tabs defaultValue="chats" className="space-y-4">
+      <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList>
-          <TabsTrigger value="chats">Conversas</TabsTrigger>
-          <TabsTrigger value="n8n">Integração N8N</TabsTrigger>
+          <TabsTrigger value="live">Chat ao Vivo</TabsTrigger>
           <TabsTrigger value="analytics">Analytics</TabsTrigger>
+          <TabsTrigger value="config">Configurações</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="chats" className="space-y-4">
-          {/* Filters */}
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex flex-col md:flex-row gap-4">
-                <div className="flex-1">
-                  <div className="relative">
-                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                    <Input
-                      placeholder="Buscar por nome ou email..."
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      className="pl-10"
-                    />
-                  </div>
-                </div>
-                <div className="flex gap-2">
-                  <Button
-                    variant={filterStatus === "all" ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => setFilterStatus("all")}
-                  >
-                    Todos
-                  </Button>
-                  <Button
-                    variant={filterStatus === "active" ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => setFilterStatus("active")}
-                  >
-                    Ativos
-                  </Button>
-                  <Button
-                    variant={filterStatus === "waiting" ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => setFilterStatus("waiting")}
-                  >
-                    Aguardando
-                  </Button>
-                  <Button
-                    variant={filterStatus === "closed" ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => setFilterStatus("closed")}
-                  >
-                    Finalizados
-                  </Button>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Chat Sessions */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Sessions List */}
+        <TabsContent value="live" className="space-y-6">
+          {/* Estatísticas Rápidas */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <Card>
-              <CardHeader>
-                <h3 className="font-semibold">Sessões de Chat ({filteredSessions.length})</h3>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Sessões Ativas</CardTitle>
+                <Activity className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
-              <CardContent className="p-0">
-                <div className="space-y-2 max-h-96 overflow-y-auto">
-                  {filteredSessions.map((session) => (
-                    <div
-                      key={session.id}
-                      className={`p-4 border-b cursor-pointer hover:bg-gray-50 ${
-                        selectedSession?.id === session.id ? "bg-blue-50 border-blue-200" : ""
-                      }`}
-                      onClick={() => setSelectedSession(session)}
-                    >
-                      <div className="flex items-center justify-between mb-2">
-                        <h4 className="font-medium">{session.customerName}</h4>
-                        <Badge className={getStatusColor(session.status)}>{getStatusLabel(session.status)}</Badge>
-                      </div>
-                      <p className="text-sm text-gray-600 mb-2">{session.lastMessage}</p>
-                      <div className="flex items-center justify-between text-xs text-gray-500">
-                        <span>{formatTime(session.startTime)}</span>
-                        <span>{session.messageCount} mensagens</span>
-                      </div>
-                      {session.agent && (
-                        <div className="mt-2">
-                          <Badge variant="outline" className="text-xs">
-                            👤 {session.agent}
-                          </Badge>
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
+              <CardContent>
+                <div className="text-2xl font-bold">{stats?.activeSessions}</div>
+                <p className="text-xs text-muted-foreground">
+                  {stats?.totalSessions} total hoje
+                </p>
               </CardContent>
             </Card>
 
-            {/* Session Details */}
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Tempo Médio</CardTitle>
+                <Clock className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{stats?.avgResponseTime}s</div>
+                <p className="text-xs text-muted-foreground">
+                  Tempo de resposta
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Satisfação</CardTitle>
+                <Star className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{stats?.satisfactionRate}/5</div>
+                <p className="text-xs text-muted-foreground">
+                  Avaliação média
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Tokens Usados</CardTitle>
+                <Brain className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">
+                  {stats?.tokensUsed?.toLocaleString()}
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  de {stats?.tokensLimit?.toLocaleString()} limite
+                </p>
+              </CardContent>
+            </Card>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Lista de Sessões */}
             <Card>
               <CardHeader>
-                <h3 className="font-semibold">
-                  {selectedSession ? `Detalhes - ${selectedSession.customerName}` : "Selecione uma conversa"}
-                </h3>
+                <CardTitle className="flex items-center gap-2">
+                  <MessageSquare className="h-5 w-5" />
+                  Conversas Ativas
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-0">
+                <ScrollArea className="h-96">
+                  <div className="space-y-2 p-4">
+                    {sessions.map((session) => (
+                      <div
+                        key={session.id}
+                        className={`p-3 rounded-lg cursor-pointer transition-colors ${
+                          selectedSession?.id === session.id
+                            ? 'bg-blue-50 border-blue-200'
+                            : 'hover:bg-gray-50'
+                        }`}
+                        onClick={() => setSelectedSession(session)}
+                      >
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="font-medium">{session.userName}</p>
+                            <p className="text-sm text-gray-500">{session.userEmail}</p>
+                          </div>
+                          <Badge
+                            variant={
+                              session.status === 'active' ? 'default' :
+                              session.status === 'completed' ? 'secondary' :
+                              'outline'
+                            }
+                          >
+                            {session.status === 'active' && 'Ativo'}
+                            {session.status === 'completed' && 'Concluído'}
+                            {session.status === 'transferred' && 'Transferido'}
+                          </Badge>
+                        </div>
+                        <div className="mt-2">
+                          <p className="text-xs text-gray-400">
+                            {formatTime(session.startTime)}
+                          </p>
+                          {session.messages.length > 0 && (
+                            <p className="text-sm text-gray-600 truncate mt-1">
+                              {session.messages[session.messages.length - 1].content}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </ScrollArea>
+              </CardContent>
+            </Card>
+
+            {/* Chat Interface */}
+            <Card className="col-span-2">
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle>
+                      {selectedSession ? selectedSession.userName : 'Selecione uma conversa'}
+                    </CardTitle>
+                    {selectedSession && (
+                      <CardDescription>
+                        {selectedSession.userEmail} • Iniciado às {formatTime(selectedSession.startTime)}
+                      </CardDescription>
+                    )}
+                  </div>
+                  {selectedSession?.status === 'active' && (
+                    <div className="flex gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleTransferToHuman(selectedSession.id)}
+                      >
+                        <User className="h-4 w-4 mr-2" />
+                        Transferir
+                      </Button>
+                    </div>
+                  )}
+                </div>
               </CardHeader>
               <CardContent>
                 {selectedSession ? (
                   <div className="space-y-4">
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <label className="text-sm font-medium text-gray-700">Nome:</label>
-                        <p className="text-sm">{selectedSession.customerName}</p>
+                    {/* Mensagens */}
+                    <ScrollArea className="h-96 border rounded-lg p-4">
+                      <div className="space-y-4">
+                        {selectedSession.messages.map((message) => (
+                          <div
+                            key={message.id}
+                            className={`flex ${message.type === 'user' ? 'justify-end' : 'justify-start'}`}
+                          >
+                            <div
+                              className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${
+                                message.type === 'user'
+                                  ? 'bg-blue-600 text-white'
+                                  : 'bg-gray-100 text-gray-900'
+                              }`}
+                            >
+                              <p className="text-sm">{message.content}</p>
+                              <div className="flex items-center justify-between mt-2">
+                                <p className="text-xs opacity-70">
+                                  {formatTime(message.timestamp)}
+                                </p>
+                                {message.type === 'assistant' && (
+                                  <div className="flex items-center gap-1">
+                                    {message.tokens && (
+                                      <span className="text-xs opacity-70">
+                                        {message.tokens} tokens
+                                      </span>
+                                    )}
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      className="h-6 w-6 p-0"
+                                      onClick={() => handleRateMessage(message.id, 1)}
+                                    >
+                                      <ThumbsUp className="h-3 w-3" />
+                                    </Button>
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      className="h-6 w-6 p-0"
+                                      onClick={() => handleRateMessage(message.id, -1)}
+                                    >
+                                      <ThumbsDown className="h-3 w-3" />
+                                    </Button>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                        <div ref={messagesEndRef} />
                       </div>
-                      <div>
-                        <label className="text-sm font-medium text-gray-700">Status:</label>
-                        <Badge className={getStatusColor(selectedSession.status)}>
-                          {getStatusLabel(selectedSession.status)}
-                        </Badge>
-                      </div>
-                    </div>
+                    </ScrollArea>
 
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <label className="text-sm font-medium text-gray-700">Email:</label>
-                        <p className="text-sm">{selectedSession.customerEmail}</p>
-                      </div>
-                      <div>
-                        <label className="text-sm font-medium text-gray-700">Telefone:</label>
-                        <p className="text-sm">{selectedSession.customerPhone}</p>
-                      </div>
-                    </div>
-
-                    <div>
-                      <label className="text-sm font-medium text-gray-700">Última mensagem:</label>
-                      <p className="text-sm bg-gray-50 p-2 rounded mt-1">{selectedSession.lastMessage}</p>
-                    </div>
-
-                    <div className="flex gap-2">
-                      <Button size="sm" className="flex-1">
-                        <MessageSquare className="w-4 h-4 mr-2" />
-                        Abrir Chat
-                      </Button>
-                      <Button size="sm" variant="outline">
-                        <Phone className="w-4 h-4 mr-2" />
-                        WhatsApp
-                      </Button>
-                      <Button size="sm" variant="outline">
-                        <Mail className="w-4 h-4 mr-2" />
-                        Email
-                      </Button>
-                    </div>
-
-                    {selectedSession.status === "waiting" && (
-                      <div className="bg-yellow-50 p-3 rounded-lg">
-                        <p className="text-sm text-yellow-800 mb-2">⏰ Cliente aguardando resposta</p>
-                        <Button size="sm" className="bg-yellow-600 hover:bg-yellow-700">
-                          Assumir Conversa
+                    {/* Input de Mensagem */}
+                    {selectedSession.status === 'active' && (
+                      <div className="flex gap-2">
+                        <Input
+                          placeholder="Digite sua mensagem..."
+                          value={newMessage}
+                          onChange={(e) => setNewMessage(e.target.value)}
+                          onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
+                          disabled={sending}
+                        />
+                        <Button
+                          onClick={handleSendMessage}
+                          disabled={!newMessage.trim() || sending}
+                        >
+                          {sending ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <Send className="h-4 w-4" />
+                          )}
                         </Button>
                       </div>
                     )}
                   </div>
                 ) : (
-                  <div className="text-center text-gray-500 py-8">
-                    <MessageSquare className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                    <p>Selecione uma conversa para ver os detalhes</p>
+                  <div className="flex items-center justify-center h-96 text-gray-500">
+                    <div className="text-center">
+                      <MessageSquare className="h-16 w-16 mx-auto mb-4 text-gray-300" />
+                      <p>Selecione uma conversa para começar</p>
+                    </div>
                   </div>
                 )}
               </CardContent>
@@ -361,24 +547,156 @@ export default function ChatAdminPage() {
           </div>
         </TabsContent>
 
-        <TabsContent value="n8n">
-          <N8NIntegration />
+        <TabsContent value="analytics" className="space-y-6">
+          {/* Analytics do Chat */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Perguntas Mais Frequentes</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {stats?.commonQuestions.map((item, index) => (
+                    <div key={index} className="flex items-center justify-between">
+                      <span className="text-sm">{item.question}</span>
+                      <div className="flex items-center gap-2">
+                        <div className="w-24 bg-gray-200 rounded-full h-2">
+                          <div
+                            className="bg-blue-600 h-2 rounded-full"
+                            style={{ width: `${(item.count / 50) * 100}%` }}
+                          />
+                        </div>
+                        <span className="text-sm font-medium">{item.count}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Estatísticas Diárias</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {stats?.dailyStats.map((day, index) => (
+                    <div key={index} className="flex items-center justify-between">
+                      <span className="text-sm">
+                        {new Date(day.date).toLocaleDateString('pt-BR')}
+                      </span>
+                      <div className="flex items-center gap-4">
+                        <span className="text-sm">{day.sessions} sessões</span>
+                        <div className="flex items-center gap-1">
+                          <Star className="h-4 w-4 text-yellow-500 fill-current" />
+                          <span className="text-sm">{day.satisfaction}</span>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
         </TabsContent>
 
-        <TabsContent value="analytics">
+        <TabsContent value="config" className="space-y-6">
+          {/* Configurações da IA */}
           <Card>
             <CardHeader>
-              <h3 className="font-semibold">Analytics do Chat</h3>
+              <CardTitle>Configurações do Chat IA</CardTitle>
+              <CardDescription>
+                Configure o comportamento da inteligência artificial
+              </CardDescription>
             </CardHeader>
-            <CardContent>
-              <div className="text-center text-gray-500 py-8">
-                <BarChart3 className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                <p>Relatórios e métricas em desenvolvimento</p>
+            <CardContent className="space-y-4">
+              <div>
+                <label className="text-sm font-medium">Modelo da IA</label>
+                <Select value={aiConfig.model} onValueChange={(value) => setAiConfig({...aiConfig, model: value})}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="gpt-3.5-turbo">GPT-3.5 Turbo</SelectItem>
+                    <SelectItem value="gpt-4">GPT-4</SelectItem>
+                    <SelectItem value="gpt-4-turbo">GPT-4 Turbo</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
+
+              <div>
+                <label className="text-sm font-medium">Prompt do Sistema</label>
+                <Textarea
+                  value={aiConfig.systemPrompt}
+                  onChange={(e) => setAiConfig({...aiConfig, systemPrompt: e.target.value})}
+                  className="min-h-32"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-sm font-medium">Temperatura (0-1)</label>
+                  <Input
+                    type="number"
+                    min="0"
+                    max="1"
+                    step="0.1"
+                    value={aiConfig.temperature}
+                    onChange={(e) => setAiConfig({...aiConfig, temperature: parseFloat(e.target.value)})}
+                  />
+                </div>
+                <div>
+                  <label className="text-sm font-medium">Máximo de Tokens</label>
+                  <Input
+                    type="number"
+                    value={aiConfig.maxTokens}
+                    onChange={(e) => setAiConfig({...aiConfig, maxTokens: parseInt(e.target.value)})}
+                  />
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium">Resposta Automática</p>
+                  <p className="text-xs text-gray-500">A IA responderá automaticamente às mensagens</p>
+                </div>
+                <Button
+                  variant={aiConfig.autoResponse ? "default" : "outline"}
+                  onClick={() => setAiConfig({...aiConfig, autoResponse: !aiConfig.autoResponse})}
+                >
+                  {aiConfig.autoResponse ? 'Ativado' : 'Desativado'}
+                </Button>
+              </div>
+
+              <Button className="w-full">
+                Salvar Configurações
+              </Button>
             </CardContent>
           </Card>
         </TabsContent>
       </Tabs>
+
+      {error && (
+        <div className="bg-red-50 border border-red-200 rounded-md p-4">
+          <div className="flex">
+            <AlertTriangle className="h-4 w-4 text-red-400" />
+            <div className="ml-3">
+              <p className="text-sm text-red-800">{error}</p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {success && (
+        <div className="bg-green-50 border border-green-200 rounded-md p-4">
+          <div className="flex">
+            <CheckCircle className="h-4 w-4 text-green-400" />
+            <div className="ml-3">
+              <p className="text-sm text-green-800">{success}</p>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

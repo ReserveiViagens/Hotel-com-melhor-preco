@@ -1,0 +1,838 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model User {
+  id        String   @id @default(cuid())
+  name      String
+  email     String   @unique
+  password  String
+  role      String   @default("client") // "admin" | "client"
+  phone     String?
+  cpf       String?  @unique
+  birthDate DateTime?
+  address   String?
+  city      String?
+  state     String?
+  zipCode   String?
+  avatar    String?  // URL da foto do perfil (login social)
+  active    Boolean  @default(true)
+  segments  Json?    // Segmentos para marketing (ex: ['vip', 'new_user', 'returning'])
+  
+  // Gamificação
+  gamificationPoints     Int      @default(0)
+  gamificationLevel      Int      @default(1)
+  gamificationExperience Int      @default(0)
+  lastLoginAt            DateTime?
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relações
+  reservations Reservation[]
+  reviews      Review[]
+  payments     Payment[]
+  notifications Notification[]
+  socialAccounts SocialAccount[]
+  socialAuthLogs SocialAuthLog[]
+  userAchievements UserAchievement[]
+  userLoginHistory UserLoginHistory[]
+  userMissions     UserMission[]
+  userEventMissions UserEventMission[]
+  auditLogs        AuditLog[]
+  securityEvents   SecurityEvent[]
+  userBehaviors    UserBehavior[]
+  userProfile      UserProfile?
+
+  @@map("users")
+}
+
+model Hotel {
+  id          String   @id @default(cuid())
+  name        String
+  description String
+  address     String
+  phone       String
+  email       String   @unique
+  price       Float
+  rating      Float    @default(0)
+  amenities   String   // JSON string
+  images      String   // JSON string
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relações
+  reservations Reservation[]
+  reviews      Review[]
+  apartments   Apartment[]
+
+  @@map("hotels")
+}
+
+model Attraction {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  description String
+  location    String
+  duration    String
+  price       Float
+  rating      Float    @default(0)
+  category    String
+  highlights  String   // JSON string
+  images      String   // JSON string
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relações
+  tickets Ticket[]
+
+  @@map("attractions")
+}
+
+model Ticket {
+  id              String   @id @default(cuid())
+  attractionId    String
+  name            String
+  description     String
+  date            DateTime
+  time            String
+  price           Float
+  availableTickets Int
+  totalTickets    Int
+  category        String
+  active          Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  // Relações
+  attraction Attraction @relation(fields: [attractionId], references: [id])
+  orders     Order[]
+
+  @@map("tickets")
+}
+
+model Promotion {
+  id                String   @id @default(cuid())
+  name              String
+  code              String   @unique
+  description       String?
+  type              String   // 'percentage', 'fixed', 'free_shipping', 'buy_one_get_one'
+  discountType      String   // 'percentage', 'fixed'
+  discountValue     Float
+  minValue          Float?   // Valor mínimo para aplicar o desconto
+  maxDiscount       Float?   // Desconto máximo (para percentual)
+  validFrom         DateTime?
+  validUntil        DateTime?
+  maxUses           Int?     // Número máximo de usos
+  currentUses       Int      @default(0)
+  applicableModules Json     // Módulos onde a promoção é válida
+  conditions        Json     // Condições especiais (JSON)
+  status            String   @default("active") // 'active', 'inactive', 'expired'
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  // Relações
+  orders Order[]
+
+  @@map("promotions")
+}
+
+model Reservation {
+  id            String   @id @default(cuid())
+  userId        String
+  hotelId       String
+  apartmentId   String?  // Para multipropriedade
+  checkIn       DateTime
+  checkOut      DateTime
+  adults        Int
+  children      Int
+  babies        Int
+  totalPrice    Float
+  paidAmount    Float    @default(0)
+  remainingAmount Float  @default(0)
+  status        String   @default("pending") // "pending" | "confirmed" | "cancelled" | "completed" | "checked_in" | "checked_out"
+  paymentStatus String   @default("pending") // "pending" | "partial" | "paid" | "failed" | "refunded"
+  paymentMethod String?
+  installmentPlan String? // "full" | "50_50" | "3x" | "6x" | "12x"
+  realEstateAgent String? // Nome do corretor
+  isCota        Boolean  @default(false) // Se é reserva de cota
+  cotaInfo      Json?    // Informações da cota
+  specialRequests String?
+  notes         String?  // Notas internas
+  channel       String   @default("website") // "website" | "whatsapp" | "phone" | "walk_in" | "airbnb" | "booking"
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Relações
+  user   User   @relation(fields: [userId], references: [id])
+  hotel  Hotel  @relation(fields: [hotelId], references: [id])
+  apartment Apartment? @relation(fields: [apartmentId], references: [id])
+  payments Payment[]
+  notifications Notification[]
+  calendarEvents CalendarEvent[]
+
+  @@map("reservations")
+}
+
+model Order {
+  id            String   @id @default(cuid())
+  userId        String
+  ticketId      String?
+  promotionId   String?
+  quantity      Int
+  totalPrice    Float
+  status        String   @default("pending") // "pending" | "confirmed" | "cancelled" | "completed"
+  paymentStatus String   @default("pending") // "pending" | "paid" | "failed" | "refunded"
+  paymentMethod String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Relações
+  ticket    Ticket?    @relation(fields: [ticketId], references: [id])
+  promotion Promotion? @relation(fields: [promotionId], references: [id])
+  payments  Payment[]
+
+  @@map("orders")
+}
+
+model Payment {
+  id            String   @id @default(cuid())
+  userId        String
+  reservationId String?
+  orderId       String?
+  amount        Float
+  method        String   // "credit_card" | "pix" | "boleto" | "transfer" | "cash"
+  gateway       String   // "mercadopago" | "pagarme" | "stone" | "stripe" | "manual"
+  status        String   @default("pending") // "pending" | "paid" | "failed" | "refunded"
+  installment   Int      @default(1)
+  totalInstallments Int  @default(1)
+  dueDate       DateTime?
+  gatewayId     String?  // ID do gateway de pagamento
+  gatewayData   Json?    // Dados adicionais do gateway
+  receipt       String?  // URL do comprovante
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Relações
+  user        User        @relation(fields: [userId], references: [id])
+  reservation Reservation? @relation(fields: [reservationId], references: [id])
+  order       Order?      @relation(fields: [orderId], references: [id])
+
+  @@map("payments")
+}
+
+model Apartment {
+  id          String   @id @default(cuid())
+  hotelId     String
+  number      String
+  type        String   // "standard" | "luxury" | "suite" | "family"
+  floor       Int
+  capacity    Int
+  price       Float
+  amenities   String   // JSON string
+  isCota      Boolean  @default(false)
+  cotaOwner   String?  // Proprietário da cota
+  realEstateAgent String? // Corretor responsável
+  status      String   @default("available") // "available" | "occupied" | "maintenance"
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relações
+  hotel Hotel @relation(fields: [hotelId], references: [id])
+  reservations Reservation[]
+
+  @@map("apartments")
+}
+
+model Notification {
+  id          String   @id @default(cuid())
+  userId      String?
+  reservationId String?
+  type        String   // "checkin_reminder" | "checkout_reminder" | "payment_due" | "confirmation" | "cancellation"
+  title       String
+  message     String
+  status      String   @default("pending") // "pending" | "sent" | "failed" | "read"
+  channel     String   // "email" | "sms" | "whatsapp" | "push"
+  scheduledAt DateTime?
+  sentAt      DateTime?
+  createdAt   DateTime @default(now())
+
+  // Relações
+  user        User?        @relation(fields: [userId], references: [id])
+  reservation Reservation? @relation(fields: [reservationId], references: [id])
+
+  @@map("notifications")
+}
+
+model CalendarEvent {
+  id          String   @id @default(cuid())
+  reservationId String
+  title       String
+  description String
+  startDate   DateTime
+  endDate     DateTime
+  type        String   // "checkin" | "checkout" | "payment" | "maintenance"
+  color       String   @default("#3B82F6")
+  externalId  String?  // ID do evento no Google Calendar
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relações
+  reservation Reservation @relation(fields: [reservationId], references: [id])
+
+  @@map("calendar_events")
+}
+
+model Review {
+  id        String   @id @default(cuid())
+  userId    String
+  hotelId   String?
+  rating    Int      // 1-5
+  comment   String?
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relações
+  user  User  @relation(fields: [userId], references: [id])
+  hotel Hotel? @relation(fields: [hotelId], references: [id])
+
+  @@map("reviews")
+}
+
+model SystemConfig {
+  id    String @id @default(cuid())
+  key   String @unique
+  value String
+  type  String @default("string") // "string" | "number" | "boolean" | "json"
+  
+  @@map("system_configs")
+}
+
+model ApiUsage {
+  id        String   @id @default(cuid())
+  endpoint  String
+  method    String
+  userId    String?
+  ipAddress String?
+  userAgent String?
+  responseTime Int?   // em milissegundos
+  statusCode Int?
+  createdAt DateTime @default(now())
+
+  @@map("api_usage")
+}
+
+model ChatMessage {
+  id        String   @id @default(cuid())
+  userId    String?
+  sessionId String
+  message   String
+  response  String
+  isAI      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@map("chat_messages")
+}
+
+model UploadedImage {
+  id           String   @id @default(cuid())
+  fileName     String
+  originalName String
+  filePath     String
+  fileSize     Int
+  mimeType     String
+  category     String
+  tags         String   // JSON array as string
+  description  String?
+  uploadedAt   DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@map("uploaded_images")
+}
+
+// ===== ETAPA 1: SISTEMA MODULAR REATIVO =====
+
+model Module {
+  id          String   @id @default(cuid())
+  name        String   @unique // 'hoteis', 'ingressos', 'atracoes', 'eventos', 'transportes', 'restaurantes', 'lojas', 'servicos'
+  label       String   // 'Hotéis', 'Ingressos', 'Atrações', 'Eventos', 'Transportes', 'Restaurantes', 'Lojas', 'Serviços'
+  icon        String   // '🏨', '🎫', '🏞️', '🎪', '🚗', '🍽️', '🛍️', '🏥'
+  active      Boolean  @default(false)
+  order       Int      @default(0)
+  config      Json     // Configurações do módulo (cores, layout, filtros)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relações
+  configs     ModuleConfig[]
+  analytics   ModuleAnalytics[]
+
+  @@map("modules")
+}
+
+model ModuleConfig {
+  id          String   @id @default(cuid())
+  moduleId    String
+  key         String   // 'colors', 'layout', 'filters', 'seo'
+  value       Json     // Valor da configuração
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relações
+  module      Module   @relation(fields: [moduleId], references: [id])
+
+  @@map("module_configs")
+}
+
+model ModuleAnalytics {
+  id          String   @id @default(cuid())
+  moduleId    String
+  date        DateTime
+  views       Int      @default(0)
+  clicks      Int      @default(0)
+  conversions Int      @default(0)
+  revenue     Float    @default(0)
+  createdAt   DateTime @default(now())
+
+  // Relações
+  module      Module   @relation(fields: [moduleId], references: [id])
+
+  @@map("module_analytics")
+}
+
+// ===== NOTIFICAÇÕES PUSH =====
+
+model NotificationSubscription {
+  id        String   @id @default(cuid())
+  userId    String
+  endpoint  String
+  p256dh    String
+  auth      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId])
+  @@map("notification_subscriptions")
+}
+
+model NotificationHistory {
+  id        String   @id @default(cuid())
+  userId    String
+  title     String
+  body      String
+  data      Json?
+  sentAt    DateTime @default(now())
+  status    String   // sent, error
+  error     String?
+
+  @@map("notification_history")
+}
+
+// ===== ETAPA 1: LOGIN SOCIAL =====
+
+model SocialAccount {
+  id            String   @id @default(cuid())
+  userId        String
+  provider      String   // 'google', 'facebook', 'apple', 'whatsapp'
+  providerId    String   // ID único na plataforma
+  accessToken   String?  // Token de acesso
+  refreshToken  String?  // Token de renovação
+  expiresAt     DateTime?
+  profileData   Json     // Dados do perfil social
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Relações
+  user          User     @relation(fields: [userId], references: [id])
+
+  @@unique([provider, providerId])
+  @@map("social_accounts")
+}
+
+model SocialAuthLog {
+  id            String   @id @default(cuid())
+  userId        String?
+  provider      String
+  action        String   // 'login', 'register', 'link', 'unlink'
+  success       Boolean
+  errorMessage  String?
+  ipAddress     String?
+  userAgent     String?
+  createdAt     DateTime @default(now())
+
+  // Relações
+  user          User?    @relation(fields: [userId], references: [id])
+
+  @@map("social_auth_logs")
+}
+
+// ===== GAMIFICAÇÃO =====
+
+model UserAchievement {
+  id            String   @id @default(cuid())
+  userId        String
+  achievementId String
+  unlockedAt    DateTime @default(now())
+
+  // Relações
+  user User @relation(fields: [userId], references: [id])
+
+  @@unique([userId, achievementId])
+  @@map("user_achievements")
+}
+
+model UserLoginHistory {
+  id      String   @id @default(cuid())
+  userId  String
+  loginAt DateTime @default(now())
+  ipAddress String?
+  userAgent String?
+
+  // Relações
+  user User @relation(fields: [userId], references: [id])
+
+  @@map("user_login_history")
+}
+
+model UserMission {
+  id          String   @id @default(cuid())
+  userId      String
+  missionId   String
+  title       String
+  description String
+  type        String   // 'booking', 'exploration', 'social', 'loyalty', 'special'
+  category    String
+  target      Int
+  current     Int      @default(0)
+  reward      String   // JSON string
+  difficulty  String   // 'easy', 'medium', 'hard'
+  expiresAt   DateTime
+  completed   Boolean  @default(false)
+  completedAt DateTime?
+  claimed     Boolean  @default(false)
+  claimedAt   DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relações
+  user User @relation(fields: [userId], references: [id])
+
+  // Índices para otimização
+  @@index([userId, completed])
+  @@index([userId, expiresAt])
+  @@index([userId, createdAt])
+  @@map("user_missions")
+}
+
+model UserEventMission {
+  id          String   @id @default(cuid())
+  userId      String
+  eventId     String
+  missionId   String
+  title       String
+  description String
+  type        String
+  target      Int
+  current     Int      @default(0)
+  reward      String   // JSON string
+  difficulty  String   // 'easy', 'medium', 'hard'
+  expiresAt   DateTime
+  completed   Boolean  @default(false)
+  completedAt DateTime?
+  claimed     Boolean  @default(false)
+  claimedAt   DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relações
+  user User @relation(fields: [userId], references: [id])
+
+  // Índices para otimização
+  @@index([userId, eventId])
+  @@index([userId, eventId, completed])
+  @@index([userId, expiresAt])
+  @@map("user_event_missions")
+}
+
+model AuditLog {
+  id          String   @id @default(cuid())
+  userId      String
+  action      String
+  resource    String
+  resourceId  String?
+  details     String   // JSON string
+  ipAddress   String?
+  userAgent   String?
+  severity    String   // 'low', 'medium', 'high', 'critical'
+  timestamp   DateTime @default(now())
+
+  // Relações
+  user User @relation(fields: [userId], references: [id])
+
+  // Índices para otimização
+  @@index([userId, action])
+  @@index([userId, timestamp])
+  @@index([severity, timestamp])
+  @@map("audit_logs")
+}
+
+model SecurityEvent {
+  id        String   @id @default(cuid())
+  type      String   // 'login_attempt', 'suspicious_activity', 'fraud_detected', 'rate_limit_exceeded'
+  userId    String?
+  ipAddress String
+  userAgent String
+  timestamp DateTime @default(now())
+  details   Json     // Detalhes do evento
+  severity  String   // 'low', 'medium', 'high', 'critical'
+  resolved  Boolean  @default(false)
+  resolvedAt DateTime?
+
+  // Relações
+  user User? @relation(fields: [userId], references: [id])
+
+  @@map("security_events")
+}
+
+// Novos modelos para funcionalidades avançadas
+
+model Backup {
+  id        String   @id @default(cuid())
+  filename  String
+  size      Int      // Tamanho em bytes
+  cloudUrl  String   // URL do backup na cloud
+  checksum  String   // SHA256 do arquivo
+  type      String   // 'FULL_ENCRYPTED', 'INCREMENTAL', 'DIFFERENTIAL'
+  status    String   // 'IN_PROGRESS', 'COMPLETED', 'FAILED'
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("backups")
+}
+
+model PerformanceMetrics {
+  id                  String   @id @default(cuid())
+  cpuUsage            Float
+  memoryUsage         Float
+  diskUsage           Float
+  responseTime        Float
+  errorRate           Float
+  activeUsers         Int
+  databaseConnections Int
+  cacheHitRate        Float
+  timestamp           DateTime @default(now())
+
+  @@map("performance_metrics")
+}
+
+model ScalingAction {
+  id        String   @id @default(cuid())
+  ruleId    String
+  action    String   // 'scale_up', 'scale_down', 'optimize'
+  timestamp DateTime @default(now())
+  metrics   Json     // Métricas no momento da ação
+  executed  Boolean  @default(false)
+  result    String?  // Resultado da ação
+
+  @@map("scaling_actions")
+}
+
+model MLRecommendation {
+  id          String   @id @default(cuid())
+  userId      String
+  itemId      String
+  itemType    String   // 'hotel', 'attraction', 'ticket'
+  score       Float
+  reason      String
+  confidence  Float
+  algorithm   String   // 'collaborative', 'content_based', 'hybrid'
+  timestamp   DateTime @default(now())
+  clicked     Boolean  @default(false)
+  converted   Boolean  @default(false)
+
+  @@map("ml_recommendations")
+}
+
+model MLPrediction {
+  id         String   @id @default(cuid())
+  type       String   // 'demand', 'price', 'conversion', 'churn'
+  value      Float
+  confidence Float
+  factors    Json     // Fatores que influenciaram a previsão
+  timestamp  DateTime @default(now())
+  actualValue Float?  // Valor real (para validação)
+
+  @@map("ml_predictions")
+}
+
+model UserBehavior {
+  id        String   @id @default(cuid())
+  userId    String
+  action    String   // 'view', 'book', 'search', 'click', 'favorite'
+  itemId    String
+  itemType  String   // 'hotel', 'attraction', 'ticket', 'promotion'
+  timestamp DateTime @default(now())
+  sessionId String
+  location  String?  // Localização do usuário
+  device    String?  // Dispositivo usado
+  metadata  Json?    // Metadados adicionais
+
+  // Relações
+  user User @relation(fields: [userId], references: [id])
+
+  @@map("user_behaviors")
+}
+
+model FraudPattern {
+  id        String   @id @default(cuid())
+  name      String
+  pattern   String   // Padrão de detecção
+  riskScore Int      // Score de risco (0-100)
+  enabled   Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("fraud_patterns")
+}
+
+model RateLimitRule {
+  id            String   @id @default(cuid())
+  endpoint      String
+  maxRequests   Int
+  windowMs      Int      // Janela de tempo em ms
+  blockDuration Int      // Duração do bloqueio em ms
+  enabled       Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@map("rate_limit_rules")
+}
+
+model BlockedIP {
+  id          String   @id @default(cuid())
+  ipAddress   String   @unique
+  reason      String
+  blockedAt   DateTime @default(now())
+  expiresAt   DateTime?
+  unblockedAt DateTime?
+
+  @@map("blocked_ips")
+}
+
+model SystemHealth {
+  id        String   @id @default(cuid())
+  status    String   // 'healthy', 'warning', 'critical'
+  score     Int      // Score de saúde (0-100)
+  issues    Json     // Lista de problemas
+  timestamp DateTime @default(now())
+
+  @@map("system_health")
+}
+
+model MLModel {
+  id          String   @id @default(cuid())
+  name        String
+  version     String
+  type        String   // 'recommendation', 'prediction', 'classification'
+  accuracy    Float?
+  precision   Float?
+  recall      Float?
+  f1Score     Float?
+  status      String   // 'training', 'active', 'inactive', 'failed'
+  trainedAt   DateTime?
+  deployedAt  DateTime?
+  metadata    Json?    // Metadados do modelo
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relações
+  trainingJobs MLTrainingJob[]
+
+  @@map("ml_models")
+}
+
+model MLTrainingJob {
+  id        String   @id @default(cuid())
+  modelId   String
+  status    String   // 'queued', 'running', 'completed', 'failed'
+  progress  Float    @default(0)
+  startTime DateTime?
+  endTime   DateTime?
+  metrics   Json?    // Métricas de treinamento
+  logs      String?  // Logs do treinamento
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relações
+  model MLModel @relation(fields: [modelId], references: [id])
+
+  @@map("ml_training_jobs")
+}
+
+model UserProfile {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  preferences Json   // Preferências do usuário
+  demographics Json  // Dados demográficos
+  behavior  Json     // Análise de comportamento
+  updatedAt DateTime @updatedAt
+
+  // Relações
+  user User @relation(fields: [userId], references: [id])
+
+  @@map("user_profiles")
+}
+
+model CacheMetrics {
+  id        String   @id @default(cuid())
+  cacheKey  String
+  hits      Int      @default(0)
+  misses    Int      @default(0)
+  size      Int      // Tamanho em bytes
+  ttl       Int      // Time to live em segundos
+  lastAccess DateTime @default(now())
+
+  @@map("cache_metrics")
+}
+
+model APIMetrics {
+  id          String   @id @default(cuid())
+  endpoint    String
+  method      String
+  responseTime Float
+  statusCode  Int
+  userId      String?
+  ipAddress   String
+  userAgent   String?
+  timestamp   DateTime @default(now())
+
+  @@map("api_metrics")
+}
+
+model ErrorLog {
+  id        String   @id @default(cuid())
+  level     String   // 'error', 'warning', 'info', 'debug'
+  message   String
+  stack     String?
+  userId    String?
+  ipAddress String?
+  userAgent String?
+  metadata  Json?
+  timestamp DateTime @default(now())
+
+  @@map("error_logs")
+}

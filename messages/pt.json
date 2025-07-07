@@ -1,0 +1,221 @@
+{
+  "common": {
+    "loading": "Carregando...",
+    "error": "Erro",
+    "success": "Sucesso",
+    "save": "Salvar",
+    "cancel": "Cancelar",
+    "edit": "Editar",
+    "delete": "Excluir",
+    "search": "Buscar",
+    "filter": "Filtrar",
+    "sort": "Ordenar",
+    "view": "Ver",
+    "close": "Fechar",
+    "back": "Voltar",
+    "next": "Próximo",
+    "previous": "Anterior",
+    "submit": "Enviar",
+    "confirm": "Confirmar",
+    "yes": "Sim",
+    "no": "Não",
+    "ok": "OK"
+  },
+  "navigation": {
+    "home": "Início",
+    "hotels": "Hotéis",
+    "tickets": "Ingressos",
+    "attractions": "Atrações",
+    "promotions": "Promoções",
+    "contact": "Contato",
+    "login": "Entrar",
+    "register": "Cadastrar",
+    "profile": "Perfil",
+    "logout": "Sair",
+    "admin": "Administração"
+  },
+  "home": {
+    "title": "Reservei Viagens",
+    "subtitle": "As melhores ofertas em hotéis, ingressos e atrações",
+    "searchHotels": "Buscar Hotéis",
+    "searchTickets": "Comprar Ingressos",
+    "searchAttractions": "Ver Atrações",
+    "featuredHotels": "Hotéis em Destaque",
+    "featuredAttractions": "Atrações em Destaque",
+    "specialOffers": "Ofertas Especiais",
+    "whyChooseUs": "Por que escolher o Reservei?",
+    "bestPrices": "Melhores Preços",
+    "secureBooking": "Reserva Segura",
+    "customerSupport": "Suporte 24/7"
+  },
+  "hotels": {
+    "title": "Hotéis",
+    "searchPlaceholder": "Buscar hotéis...",
+    "filters": {
+      "price": "Preço",
+      "rating": "Avaliação",
+      "amenities": "Comodidades",
+      "location": "Localização",
+      "date": "Data"
+    },
+    "amenities": {
+      "wifi": "Wi-Fi",
+      "pool": "Piscina",
+      "gym": "Academia",
+      "parking": "Estacionamento",
+      "breakfast": "Café da manhã",
+      "spa": "Spa",
+      "restaurant": "Restaurante"
+    },
+    "booking": {
+      "checkIn": "Check-in",
+      "checkOut": "Check-out",
+      "guests": "Hóspedes",
+      "adults": "Adultos",
+      "children": "Crianças",
+      "babies": "Bebês",
+      "totalPrice": "Preço Total",
+      "bookNow": "Reservar Agora",
+      "selectRoom": "Selecionar Quarto"
+    }
+  },
+  "tickets": {
+    "title": "Ingressos",
+    "searchPlaceholder": "Buscar ingressos...",
+    "filters": {
+      "category": "Categoria",
+      "date": "Data",
+      "price": "Preço",
+      "location": "Localização"
+    },
+    "categories": {
+      "themePark": "Parque Temático",
+      "waterPark": "Parque Aquático",
+      "museum": "Museu",
+      "theater": "Teatro",
+      "concert": "Show",
+      "sports": "Esporte",
+      "adventure": "Aventura"
+    },
+    "booking": {
+      "date": "Data",
+      "time": "Horário",
+      "quantity": "Quantidade",
+      "totalPrice": "Preço Total",
+      "buyNow": "Comprar Agora"
+    }
+  },
+  "attractions": {
+    "title": "Atrações",
+    "searchPlaceholder": "Buscar atrações...",
+    "filters": {
+      "category": "Categoria",
+      "rating": "Avaliação",
+      "price": "Preço",
+      "duration": "Duração"
+    },
+    "details": {
+      "description": "Descrição",
+      "highlights": "Destaques",
+      "location": "Localização",
+      "duration": "Duração",
+      "price": "Preço",
+      "rating": "Avaliação",
+      "reviews": "Avaliações"
+    }
+  },
+  "auth": {
+    "login": {
+      "title": "Entrar",
+      "email": "E-mail",
+      "password": "Senha",
+      "forgotPassword": "Esqueci minha senha",
+      "loginButton": "Entrar",
+      "noAccount": "Não tem uma conta?",
+      "registerLink": "Cadastre-se"
+    },
+    "register": {
+      "title": "Cadastrar",
+      "name": "Nome",
+      "email": "E-mail",
+      "password": "Senha",
+      "confirmPassword": "Confirmar Senha",
+      "phone": "Telefone",
+      "birthDate": "Data de Nascimento",
+      "registerButton": "Cadastrar",
+      "hasAccount": "Já tem uma conta?",
+      "loginLink": "Entrar"
+    },
+    "forgotPassword": {
+      "title": "Recuperar Senha",
+      "email": "E-mail",
+      "sendButton": "Enviar Link",
+      "backToLogin": "Voltar para o login"
+    }
+  },
+  "profile": {
+    "title": "Meu Perfil",
+    "personalInfo": "Informações Pessoais",
+    "reservations": "Minhas Reservas",
+    "favorites": "Favoritos",
+    "settings": "Configurações",
+    "editProfile": "Editar Perfil",
+    "changePassword": "Alterar Senha",
+    "notifications": "Notificações"
+  },
+  "admin": {
+    "dashboard": "Dashboard",
+    "reservations": "Reservas",
+    "hotels": "Hotéis",
+    "tickets": "Ingressos",
+    "attractions": "Atrações",
+    "promotions": "Promoções",
+    "users": "Usuários",
+    "reports": "Relatórios",
+    "settings": "Configurações",
+    "chat": "Chat",
+    "analytics": "Analytics"
+  },
+  "booking": {
+    "summary": "Resumo da Reserva",
+    "confirmation": "Confirmação",
+    "payment": "Pagamento",
+    "success": "Reserva Confirmada",
+    "error": "Erro na Reserva",
+    "steps": {
+      "details": "Detalhes",
+      "payment": "Pagamento",
+      "confirmation": "Confirmação"
+    }
+  },
+  "payment": {
+    "methods": {
+      "creditCard": "Cartão de Crédito",
+      "pix": "PIX",
+      "boleto": "Boleto",
+      "transfer": "Transferência"
+    },
+    "cardInfo": {
+      "number": "Número do Cartão",
+      "name": "Nome no Cartão",
+      "expiry": "Validade",
+      "cvv": "CVV"
+    }
+  },
+  "notifications": {
+    "bookingConfirmed": "Reserva confirmada com sucesso!",
+    "paymentSuccess": "Pagamento realizado com sucesso!",
+    "bookingCancelled": "Reserva cancelada",
+    "newPromotion": "Nova promoção disponível!",
+    "priceDrop": "Queda de preço detectada!"
+  },
+  "errors": {
+    "networkError": "Erro de conexão. Tente novamente.",
+    "invalidEmail": "E-mail inválido",
+    "invalidPassword": "Senha deve ter pelo menos 6 caracteres",
+    "passwordsDontMatch": "Senhas não coincidem",
+    "requiredField": "Campo obrigatório",
+    "bookingError": "Erro ao fazer reserva",
+    "paymentError": "Erro no pagamento"
+  }
+} 

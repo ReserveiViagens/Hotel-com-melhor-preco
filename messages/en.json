@@ -1,0 +1,221 @@
+{
+  "common": {
+    "loading": "Loading...",
+    "error": "Error",
+    "success": "Success",
+    "save": "Save",
+    "cancel": "Cancel",
+    "edit": "Edit",
+    "delete": "Delete",
+    "search": "Search",
+    "filter": "Filter",
+    "sort": "Sort",
+    "view": "View",
+    "close": "Close",
+    "back": "Back",
+    "next": "Next",
+    "previous": "Previous",
+    "submit": "Submit",
+    "confirm": "Confirm",
+    "yes": "Yes",
+    "no": "No",
+    "ok": "OK"
+  },
+  "navigation": {
+    "home": "Home",
+    "hotels": "Hotels",
+    "tickets": "Tickets",
+    "attractions": "Attractions",
+    "promotions": "Promotions",
+    "contact": "Contact",
+    "login": "Login",
+    "register": "Register",
+    "profile": "Profile",
+    "logout": "Logout",
+    "admin": "Admin"
+  },
+  "home": {
+    "title": "Reservei Travel",
+    "subtitle": "Best deals on hotels, tickets and attractions",
+    "searchHotels": "Search Hotels",
+    "searchTickets": "Buy Tickets",
+    "searchAttractions": "View Attractions",
+    "featuredHotels": "Featured Hotels",
+    "featuredAttractions": "Featured Attractions",
+    "specialOffers": "Special Offers",
+    "whyChooseUs": "Why choose Reservei?",
+    "bestPrices": "Best Prices",
+    "secureBooking": "Secure Booking",
+    "customerSupport": "24/7 Support"
+  },
+  "hotels": {
+    "title": "Hotels",
+    "searchPlaceholder": "Search hotels...",
+    "filters": {
+      "price": "Price",
+      "rating": "Rating",
+      "amenities": "Amenities",
+      "location": "Location",
+      "date": "Date"
+    },
+    "amenities": {
+      "wifi": "Wi-Fi",
+      "pool": "Pool",
+      "gym": "Gym",
+      "parking": "Parking",
+      "breakfast": "Breakfast",
+      "spa": "Spa",
+      "restaurant": "Restaurant"
+    },
+    "booking": {
+      "checkIn": "Check-in",
+      "checkOut": "Check-out",
+      "guests": "Guests",
+      "adults": "Adults",
+      "children": "Children",
+      "babies": "Babies",
+      "totalPrice": "Total Price",
+      "bookNow": "Book Now",
+      "selectRoom": "Select Room"
+    }
+  },
+  "tickets": {
+    "title": "Tickets",
+    "searchPlaceholder": "Search tickets...",
+    "filters": {
+      "category": "Category",
+      "date": "Date",
+      "price": "Price",
+      "location": "Location"
+    },
+    "categories": {
+      "themePark": "Theme Park",
+      "waterPark": "Water Park",
+      "museum": "Museum",
+      "theater": "Theater",
+      "concert": "Concert",
+      "sports": "Sports",
+      "adventure": "Adventure"
+    },
+    "booking": {
+      "date": "Date",
+      "time": "Time",
+      "quantity": "Quantity",
+      "totalPrice": "Total Price",
+      "buyNow": "Buy Now"
+    }
+  },
+  "attractions": {
+    "title": "Attractions",
+    "searchPlaceholder": "Search attractions...",
+    "filters": {
+      "category": "Category",
+      "rating": "Rating",
+      "price": "Price",
+      "duration": "Duration"
+    },
+    "details": {
+      "description": "Description",
+      "highlights": "Highlights",
+      "location": "Location",
+      "duration": "Duration",
+      "price": "Price",
+      "rating": "Rating",
+      "reviews": "Reviews"
+    }
+  },
+  "auth": {
+    "login": {
+      "title": "Login",
+      "email": "Email",
+      "password": "Password",
+      "forgotPassword": "Forgot password?",
+      "loginButton": "Login",
+      "noAccount": "Don't have an account?",
+      "registerLink": "Register"
+    },
+    "register": {
+      "title": "Register",
+      "name": "Name",
+      "email": "Email",
+      "password": "Password",
+      "confirmPassword": "Confirm Password",
+      "phone": "Phone",
+      "birthDate": "Birth Date",
+      "registerButton": "Register",
+      "hasAccount": "Already have an account?",
+      "loginLink": "Login"
+    },
+    "forgotPassword": {
+      "title": "Reset Password",
+      "email": "Email",
+      "sendButton": "Send Link",
+      "backToLogin": "Back to login"
+    }
+  },
+  "profile": {
+    "title": "My Profile",
+    "personalInfo": "Personal Information",
+    "reservations": "My Reservations",
+    "favorites": "Favorites",
+    "settings": "Settings",
+    "editProfile": "Edit Profile",
+    "changePassword": "Change Password",
+    "notifications": "Notifications"
+  },
+  "admin": {
+    "dashboard": "Dashboard",
+    "reservations": "Reservations",
+    "hotels": "Hotels",
+    "tickets": "Tickets",
+    "attractions": "Attractions",
+    "promotions": "Promotions",
+    "users": "Users",
+    "reports": "Reports",
+    "settings": "Settings",
+    "chat": "Chat",
+    "analytics": "Analytics"
+  },
+  "booking": {
+    "summary": "Booking Summary",
+    "confirmation": "Confirmation",
+    "payment": "Payment",
+    "success": "Booking Confirmed",
+    "error": "Booking Error",
+    "steps": {
+      "details": "Details",
+      "payment": "Payment",
+      "confirmation": "Confirmation"
+    }
+  },
+  "payment": {
+    "methods": {
+      "creditCard": "Credit Card",
+      "pix": "PIX",
+      "boleto": "Boleto",
+      "transfer": "Transfer"
+    },
+    "cardInfo": {
+      "number": "Card Number",
+      "name": "Cardholder Name",
+      "expiry": "Expiry Date",
+      "cvv": "CVV"
+    }
+  },
+  "notifications": {
+    "bookingConfirmed": "Booking confirmed successfully!",
+    "paymentSuccess": "Payment completed successfully!",
+    "bookingCancelled": "Booking cancelled",
+    "newPromotion": "New promotion available!",
+    "priceDrop": "Price drop detected!"
+  },
+  "errors": {
+    "networkError": "Connection error. Please try again.",
+    "invalidEmail": "Invalid email",
+    "invalidPassword": "Password must have at least 6 characters",
+    "passwordsDontMatch": "Passwords don't match",
+    "requiredField": "Required field",
+    "bookingError": "Error making booking",
+    "paymentError": "Payment error"
+  }
+} 

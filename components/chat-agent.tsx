@@ -6,8 +6,9 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Label } from "@/components/ui/label"
+import ChatCallToAction from "@/components/chat-call-to-action"
+import Image from "next/image"
 
 interface Message {
   id: string
@@ -65,6 +66,7 @@ export default function ChatAgent() {
   })
   const [bookingStep, setBookingStep] = useState(0)
   const messagesEndRef = useRef<HTMLDivElement>(null)
+  const [showCallToAction, setShowCallToAction] = useState(true)
 
   // Knowledge Base
   const knowledgeBase = {
@@ -168,7 +170,7 @@ export default function ChatAgent() {
     setMessages([welcomeMessage])
 
     // Check agent status
-    checkAgentStatus()
+    // checkAgentStatus()
   }, [])
 
   useEffect(() => {
@@ -185,23 +187,23 @@ export default function ChatAgent() {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
   }
 
-  const checkAgentStatus = async () => {
-    try {
-      const response = await fetch("/api/n8n", {
-        method: "GET",
-      })
+  // const checkAgentStatus = async () => {
+  //   try {
+  //     const response = await fetch("/api/n8n", {
+  //       method: "GET",
+  //     })
 
-      if (response.ok) {
-        const data = await response.json()
-        setAgentStatus(data.status === "connected" ? "online" : data.status === "error" ? "busy" : "offline")
-      } else {
-        setAgentStatus("offline")
-      }
-    } catch (error) {
-      console.log("N8N status check unavailable, defaulting to online")
-      setAgentStatus("online")
-    }
-  }
+  //     if (response.ok) {
+  //       const data = await response.json()
+  //       setAgentStatus(data.status === "connected" ? "online" : data.status === "error" ? "busy" : "offline")
+  //     } else {
+  //       setAgentStatus("offline")
+  //     }
+  //   } catch (error) {
+  //     console.log("N8N status check unavailable, defaulting to online")
+  //     setAgentStatus("online")
+  //   }
+  // }
 
   const sendToN8N = async (message: string, messageType = "text", additionalData = {}) => {
     try {
@@ -418,71 +420,113 @@ Reserva via Chat Serena - Reservei Viagens
   }
 
   const handleSendMessage = async () => {
-    if (!inputMessage.trim()) return
+    if (!inputMessage.trim() || isTyping) return
+
+    const messageText = inputMessage.trim()
 
     const userMessage: Message = {
       id: `msg_${Date.now()}`,
-      text: inputMessage,
+      text: messageText,
       sender: "user",
       timestamp: new Date(),
       type: "text",
     }
 
     setMessages((prev) => [...prev, userMessage])
-    setConversationContext((prev) => [...prev, inputMessage])
+    setConversationContext((prev) => [...prev, messageText])
     setInputMessage("")
     setIsTyping(true)
 
-    // Send to n8n
-    const response = await sendToN8N(inputMessage)
+    try {
+      // Primeiro, tentar usar a API da OpenAI
+      const aiResponse = await fetch('/api/ai/chat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          message: messageText,
+          context: 'Reservei Viagens - Agência especializada em Caldas Novas'
+        }),
+      });
 
-    // Simulate typing delay
-    setTimeout(() => {
-      setIsTyping(false)
+      let botResponse: Message;
 
-      let botResponse: Message
-
-      if (response && response.reply) {
+      if (aiResponse.ok) {
+        const aiData = await aiResponse.json();
         botResponse = {
           id: `bot_${Date.now()}`,
-          text: response.reply,
-          sender: response.isHuman ? "agent" : "bot",
-          timestamp: new Date(),
-          type: response.type || "text",
-          metadata: response.metadata,
-        }
-      } else {
-        // Intelligent fallback response
-        const intelligentResponse = generateIntelligentResponse(inputMessage)
-        botResponse = {
-          id: `bot_${Date.now()}`,
-          text: intelligentResponse,
+          text: aiData.message,
           sender: "bot",
           timestamp: new Date(),
           type: "text",
+        };
+      } else {
+        // Fallback: tentar N8N
+        const n8nResponse = await sendToN8N(messageText);
+
+        if (n8nResponse && n8nResponse.reply) {
+          botResponse = {
+            id: `bot_${Date.now()}`,
+            text: n8nResponse.reply,
+            sender: n8nResponse.isHuman ? "agent" : "bot",
+            timestamp: new Date(),
+            type: n8nResponse.type || "text",
+            metadata: n8nResponse.metadata,
+          };
+        } else {
+          // Fallback final: resposta inteligente baseada em palavras-chave
+          const intelligentResponse = generateIntelligentResponse(messageText);
+          botResponse = {
+            id: `bot_${Date.now()}`,
+            text: intelligentResponse,
+            sender: "bot",
+            timestamp: new Date(),
+            type: "text",
+          };
         }
       }
 
-      setMessages((prev) => [...prev, botResponse])
+      // Simulate typing delay
+      setTimeout(() => {
+        setIsTyping(false);
+        setMessages((prev) => [...prev, botResponse]);
 
-      // Add WhatsApp transfer option after a few exchanges
-      if (conversationContext.length >= 3 && !showBookingForm) {
-        setTimeout(() => {
-          const transferMessage: Message = {
-            id: `transfer_${Date.now()}`,
-            text: "Gostaria de falar diretamente com um de nossos especialistas via WhatsApp? Posso te conectar agora mesmo! 📱",
-            sender: "bot",
-            timestamp: new Date(),
-            type: "whatsapp_transfer",
-          }
-          setMessages((prev) => [...prev, transferMessage])
-        }, 2000)
-      }
+        // Add WhatsApp transfer option after a few exchanges
+        if (conversationContext.length >= 3 && !showBookingForm) {
+          setTimeout(() => {
+            const transferMessage: Message = {
+              id: `transfer_${Date.now()}`,
+              text: "Gostaria de falar diretamente com um de nossos especialistas via WhatsApp? Posso te conectar agora mesmo! 📱",
+              sender: "bot",
+              timestamp: new Date(),
+              type: "whatsapp_transfer",
+            };
+            setMessages((prev) => [...prev, transferMessage]);
+          }, 2000);
+        }
 
-      if (!isOpen) {
-        setUnreadCount((prev) => prev + 1)
-      }
-    }, 1500)
+        if (!isOpen) {
+          setUnreadCount((prev) => prev + 1);
+        }
+      }, 1500);
+
+    } catch (error) {
+      console.error('Erro ao processar mensagem:', error);
+      
+      // Fallback em caso de erro
+      setTimeout(() => {
+        setIsTyping(false);
+        const fallbackResponse: Message = {
+          id: `bot_${Date.now()}`,
+          text: "Desculpe, estou com dificuldades técnicas no momento. Posso te ajudar com informações sobre nossos pacotes para Caldas Novas ou você prefere falar diretamente com um especialista via WhatsApp?",
+          sender: "bot",
+          timestamp: new Date(),
+          type: "text",
+        };
+        setMessages((prev) => [...prev, fallbackResponse]);
+      }, 1500);
+    }
   }
 
   const handleQuickReply = (reply: string) => {
@@ -633,16 +677,34 @@ Reserva via Chat Serena - Reservei Viagens
     return checkIn.toISOString().split("T")[0]
   }
 
+  const handleOpenChat = () => {
+    setIsOpen(true)
+    setUnreadCount(0)
+    setShowCallToAction(false)
+  }
+
   return (
     <>
+      {/* Chat Call to Action */}
+      {!isOpen && showCallToAction && (
+        <ChatCallToAction onOpenChat={handleOpenChat}>
+          <div className="bg-white/20 rounded-full p-2 mt-1 w-10 h-10 overflow-hidden">
+            <Image
+              src="/images/serena-profile.png"
+              alt="Serena"
+              width={24}
+              height={24}
+              className="w-full h-full object-cover rounded-full"
+            />
+          </div>
+        </ChatCallToAction>
+      )}
       {/* Chat Button */}
       {!isOpen && (
         <div className="fixed bottom-4 left-4 z-50">
           <Button
-            onClick={() => {
-              setIsOpen(true)
-              setUnreadCount(0)
-            }}
+            onClick={handleOpenChat}
+            data-chat-trigger
             className="w-16 h-16 rounded-full bg-purple-600 hover:bg-purple-700 shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-110 relative"
           >
             <MessageCircle className="w-8 h-8 text-white" />
@@ -652,9 +714,6 @@ Reserva via Chat Serena - Reservei Viagens
               </Badge>
             )}
           </Button>
-          {agentStatus === "online" && (
-            <div className="absolute -top-1 -right-1 w-4 h-4 bg-green-500 rounded-full border-2 border-white animate-pulse"></div>
-          )}
         </div>
       )}
 
@@ -670,25 +729,21 @@ Reserva via Chat Serena - Reservei Viagens
             <CardHeader className="bg-gradient-to-r from-purple-600 to-purple-700 text-white p-4 rounded-t-lg">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <Avatar className="w-8 h-8">
-                    <AvatarFallback className="bg-purple-500 text-white text-sm font-bold">S</AvatarFallback>
-                  </Avatar>
+                  <div className="w-8 h-8 rounded-full overflow-hidden bg-purple-500">
+                    <Image
+                      src="/images/serena-profile.png"
+                      alt="Serena - Consultora de Turismo"
+                      width={32}
+                      height={32}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
                   <div>
                     <h3 className="font-semibold text-sm">Serena</h3>
                     <p className="text-xs opacity-90">Consultora de Turismo Imobiliário</p>
                     <div className="flex items-center gap-1 mt-1">
-                      <div
-                        className={`w-2 h-2 rounded-full ${
-                          agentStatus === "online"
-                            ? "bg-green-400"
-                            : agentStatus === "busy"
-                              ? "bg-yellow-400"
-                              : "bg-gray-400"
-                        }`}
-                      ></div>
-                      <span className="text-xs opacity-90">
-                        {agentStatus === "online" ? "Online" : agentStatus === "busy" ? "Ocupada" : "Offline"}
-                      </span>
+                      <div className="w-2 h-2 rounded-full bg-green-400"></div>
+                      <span className="text-xs opacity-90">Online 24h</span>
                     </div>
                   </div>
                 </div>
@@ -895,15 +950,6 @@ Reserva via Chat Serena - Reservei Viagens
                         <p className="text-xs text-gray-500">Crianças: 2-12 anos | Bebês: 0-2 anos</p>
                       </div>
 
-                      {/* Summary */}
-                      {bookingData.checkIn && bookingData.checkOut && (
-                        <div className="bg-white p-2 rounded border text-xs">
-                          <p className="font-semibold text-blue-700">Resumo:</p>
-                          <p>📅 {calculateDays(bookingData.checkIn, bookingData.checkOut)} dias</p>
-                          <p>👥 {bookingData.adults + bookingData.children + bookingData.babies} pessoas</p>
-                        </div>
-                      )}
-
                       <div className="flex gap-2">
                         <Button onClick={handleBookingSubmit} className="flex-1 text-xs bg-blue-600 hover:bg-blue-700">
                           📅 Agendar no Google Agenda
@@ -912,6 +958,15 @@ Reserva via Chat Serena - Reservei Viagens
                           Cancelar
                         </Button>
                       </div>
+
+                      {/* Summary */}
+                      {bookingData.checkIn && bookingData.checkOut && (
+                        <div className="bg-white p-2 rounded border text-xs">
+                          <p className="font-semibold text-blue-700">Resumo:</p>
+                          <p>📅 {calculateDays(bookingData.checkIn, bookingData.checkOut)} dias</p>
+                          <p>👥 {bookingData.adults + bookingData.children + bookingData.babies} pessoas</p>
+                        </div>
+                      )}
                     </div>
                   </div>
                 )}
@@ -952,38 +1007,53 @@ Reserva via Chat Serena - Reservei Viagens
 
                 {/* Input Area */}
                 <div className="p-4 border-t">
-                  <div className="flex items-center gap-2">
-                    <div className="flex-1 relative">
-                      <Input
-                        value={inputMessage}
-                        onChange={(e) => setInputMessage(e.target.value)}
-                        placeholder="Digite sua mensagem..."
-                        onKeyPress={(e) => e.key === "Enter" && handleSendMessage()}
-                        className="pr-20"
-                      />
-                      <div className="absolute right-2 top-1/2 transform -translate-y-1/2 flex gap-1">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="p-1 h-6 w-6"
-                          onClick={() => setShowBookingForm(true)}
-                          title="Agendar viagem"
-                        >
-                          <Calendar className="w-3 h-3" />
-                        </Button>
-                        <Button variant="ghost" size="sm" className="p-1 h-6 w-6">
-                          <Smile className="w-3 h-3" />
-                        </Button>
+                  <form
+                    onSubmit={(e) => {
+                      e.preventDefault()
+                      handleSendMessage()
+                    }}
+                    className="space-y-3"
+                  >
+                    <div className="flex items-center gap-2">
+                      <div className="flex-1 relative">
+                        <Input
+                          value={inputMessage}
+                          onChange={(e) => setInputMessage(e.target.value)}
+                          placeholder="Digite sua mensagem..."
+                          className="pr-20"
+                          disabled={isTyping}
+                        />
+                        <div className="absolute right-2 top-1/2 transform -translate-y-1/2 flex gap-1">
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            className="p-1 h-6 w-6"
+                            onClick={() => setShowBookingForm(true)}
+                            title="Agendar viagem"
+                          >
+                            <Calendar className="w-3 h-3" />
+                          </Button>
+                          <Button type="button" variant="ghost" size="sm" className="p-1 h-6 w-6">
+                            <Smile className="w-3 h-3" />
+                          </Button>
+                        </div>
                       </div>
+                      <Button
+                        type="submit"
+                        size="sm"
+                        className="px-3 bg-purple-600 hover:bg-purple-700"
+                        disabled={isTyping || !inputMessage.trim()}
+                      >
+                        <Send className="w-4 h-4" />
+                      </Button>
                     </div>
-                    <Button onClick={handleSendMessage} size="sm" className="px-3 bg-purple-600 hover:bg-purple-700">
-                      <Send className="w-4 h-4" />
-                    </Button>
-                  </div>
+                  </form>
 
                   {/* Quick Actions */}
                   <div className="flex justify-center gap-4 mt-3">
                     <Button
+                      type="button"
                       variant="ghost"
                       size="sm"
                       onClick={handleWhatsAppTransfer}
@@ -993,6 +1063,7 @@ Reserva via Chat Serena - Reservei Viagens
                       WhatsApp
                     </Button>
                     <Button
+                      type="button"
                       variant="ghost"
                       size="sm"
                       onClick={() => setShowUserForm(true)}
@@ -1002,6 +1073,7 @@ Reserva via Chat Serena - Reservei Viagens
                       Meus Dados
                     </Button>
                     <Button
+                      type="button"
                       variant="ghost"
                       size="sm"
                       onClick={() => setShowBookingForm(true)}

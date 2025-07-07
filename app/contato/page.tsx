@@ -1,316 +1,446 @@
 "use client"
 
-import { useState, useEffect } from "react"
-import { ArrowLeft, Phone, Mail, MapPin, Clock, MessageCircle, Calendar } from "lucide-react"
+import type React from "react"
+
+import { useState } from "react"
+import { ArrowLeft, Mail, MapPin, Clock, MessageCircle, Send, Home, Calendar, FileText, Calculator } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
+import { Input } from "@/components/ui/input"
+import { Textarea } from "@/components/ui/textarea"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import Image from "next/image"
 import Link from "next/link"
+import ChatAgent from "@/components/chat-agent"
+import ConsultoriaPopup from "@/components/consultoria-popup"
 
 export default function ContatoPage() {
-  const [isLoading, setIsLoading] = useState(true)
+  const [formData, setFormData] = useState({
+    name: "",
+    email: "",
+    phone: "",
+    message: "",
+  })
+  const [showConsultoriaPopup, setShowConsultoriaPopup] = useState(false)
 
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setIsLoading(false)
-    }, 1500)
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }))
+  }
 
-    return () => clearTimeout(timer)
-  }, [])
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    const whatsappMessage = `Olá! Meu nome é ${formData.name}.
+    
+📧 Email: ${formData.email}
+📱 Telefone: ${formData.phone}
 
-  if (isLoading) {
-    return (
-      <div className="fixed inset-0 bg-gradient-to-br from-purple-600 to-blue-600 flex flex-col items-center justify-center z-50">
-        <div className="relative mb-8">
-          <div className="w-32 h-32 rounded-full bg-white/20 animate-pulse"></div>
-          <div className="absolute inset-0 flex items-center justify-center">
-            <div className="text-6xl animate-bounce">📞</div>
-          </div>
-        </div>
-        <div className="text-white text-center">
-          <h2 className="text-2xl font-bold mb-2">Carregando Contatos</h2>
-          <p className="text-purple-100">Conectando você com nossos especialistas...</p>
-        </div>
-        <div className="mt-8 w-48 h-1 bg-white/20 rounded-full overflow-hidden">
-          <div className="h-full bg-white rounded-full animate-pulse"></div>
-        </div>
-      </div>
-    )
+💬 Mensagem: ${formData.message}
+
+Gostaria de mais informações sobre os serviços da Reservei Viagens.`
+
+    const whatsappUrl = `https://wa.me/5564993197555?text=${encodeURIComponent(whatsappMessage)}`
+    window.open(whatsappUrl, "_blank")
+  }
+
+  const handleSolicitarCotacao = () => {
+    // Simula clique no chat agent para abrir
+    const chatButton = document.querySelector("[data-chat-trigger]") as HTMLElement
+    if (chatButton) {
+      chatButton.click()
+    }
+
+    // Aguarda um pouco para o chat abrir e então envia mensagem
+    setTimeout(() => {
+      const chatInput = document.querySelector('input[placeholder*="mensagem"]') as HTMLInputElement
+      if (chatInput) {
+        const message = "Quero fazer uma reserva"
+        chatInput.value = message
+
+        // Simula envio da mensagem
+        const sendButton = chatInput.parentElement?.querySelector('button[type="submit"]') as HTMLElement
+        if (sendButton) {
+          sendButton.click()
+        }
+      }
+    }, 500)
   }
 
   return (
-    <div className="max-w-md mx-auto bg-gradient-to-br from-purple-500 to-blue-600 min-h-screen relative">
-      <div className="animate-in fade-in duration-500">
-        {/* Header */}
-        <header className="bg-gradient-to-r from-purple-600 to-purple-700 text-white p-6 rounded-b-3xl shadow-lg relative overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-r from-purple-600/80 to-blue-600/80"></div>
-          <div className="relative z-10">
-            <div className="flex items-center gap-3 mb-4">
-              <Link href="/">
-                <Button variant="ghost" size="sm" className="text-white hover:bg-white/20 p-2">
-                  <ArrowLeft className="w-5 h-5" />
-                </Button>
-              </Link>
-              <Image
-                src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/favicon-reservei-viagens-VVm0zxcolWbkv9Lf5Yj0PUoxLJrARl.png"
-                alt="Reservei Viagens"
-                width={40}
-                height={40}
-                className="rounded-full bg-white/20 p-1"
-              />
-            </div>
-
-            <div className="text-center">
-              <div className="bg-purple-500 rounded-full px-6 py-3 inline-block mb-4">
-                <h1 className="text-xl font-bold tracking-tight">Reservei Viagens</h1>
-              </div>
-              <p className="text-purple-100 text-sm">Especialistas em Caldas Novas</p>
-            </div>
-          </div>
-        </header>
-
-        {/* Main Content */}
-        <div className="p-4 space-y-4">
-          {/* Consultoria de Viagens */}
-          <Card className="overflow-hidden hover:shadow-xl transition-all duration-300 hover:scale-[1.02] bg-gradient-to-r from-blue-500 to-cyan-500 text-white">
-            <CardContent className="p-0">
-              <div className="flex items-center">
-                <div className="flex-1 p-6">
-                  <h3 className="text-xl font-bold mb-2">Consultoria</h3>
-                  <h3 className="text-xl font-bold mb-3">de Viagens</h3>
-                  <p className="text-sm text-blue-100 mb-4">Planejamento personalizado para sua viagem dos sonhos</p>
-                  <Button
-                    className="bg-white text-blue-600 hover:bg-blue-50 font-bold"
-                    onClick={() =>
-                      window.open(
-                        "https://wa.me/5564993197555?text=Olá! Quero uma consultoria personalizada para minha viagem!",
-                        "_blank",
-                      )
-                    }
-                  >
-                    Consultar Agora
-                  </Button>
-                </div>
-                <div className="w-32 h-32 bg-white/20 rounded-l-full flex items-center justify-center mr-4">
-                  <div className="w-20 h-20 bg-white rounded-full flex items-center justify-center">
-                    <span className="text-3xl">👨‍💼</span>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Catálogos de Pacotes */}
-          <Card className="overflow-hidden hover:shadow-xl transition-all duration-300 hover:scale-[1.02] bg-gradient-to-r from-orange-500 to-red-500 text-white">
-            <CardContent className="p-0">
-              <div className="flex items-center">
-                <div className="w-32 h-32 bg-white/20 rounded-r-full flex items-center justify-center ml-4">
-                  <div className="w-20 h-20 bg-white rounded-full flex items-center justify-center">
-                    <span className="text-3xl">🏨</span>
-                  </div>
-                </div>
-                <div className="flex-1 p-6">
-                  <h3 className="text-xl font-bold mb-2">Catálogos</h3>
-                  <h3 className="text-xl font-bold mb-3">de Pacotes</h3>
-                  <p className="text-sm text-orange-100 mb-4">via WhatsApp</p>
-                  <Button
-                    className="bg-white text-orange-600 hover:bg-orange-50 font-bold"
-                    onClick={() =>
-                      window.open(
-                        "https://wa.me/5564993197555?text=Olá! Quero receber o catálogo completo de pacotes!",
-                        "_blank",
-                      )
-                    }
-                  >
-                    Receber Catálogo
-                  </Button>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Contato e WhatsApp */}
-          <Card className="overflow-hidden hover:shadow-xl transition-all duration-300 hover:scale-[1.02] bg-gradient-to-r from-green-500 to-emerald-500 text-white">
-            <CardContent className="p-6 text-center">
-              <div className="flex items-center justify-center mb-4">
-                <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center mr-4">
-                  <span className="text-3xl">👨‍💼</span>
-                </div>
-                <div className="flex gap-2">
-                  <MessageCircle className="w-8 h-8 text-white" />
-                  <MessageCircle className="w-8 h-8 text-white" />
-                </div>
-              </div>
-              <h3 className="text-xl font-bold mb-2">Contato e</h3>
-              <h3 className="text-xl font-bold mb-4">WhatsApp</h3>
-              <p className="text-sm text-green-100 mb-4">Atendimento personalizado via WhatsApp</p>
-
-              <div className="grid grid-cols-2 gap-2">
-                <Button
-                  className="bg-white text-green-600 hover:bg-green-50 font-bold text-xs"
-                  onClick={() => window.open("https://wa.me/5564993197555", "_blank")}
-                >
-                  (64) 99319-7555
-                </Button>
-                <Button
-                  className="bg-white text-green-600 hover:bg-green-50 font-bold text-xs"
-                  onClick={() => window.open("https://wa.me/5564993068752", "_blank")}
-                >
-                  (64) 99306-8752
-                </Button>
-                <Button
-                  className="bg-white text-green-600 hover:bg-green-50 font-bold text-xs"
-                  onClick={() => window.open("https://wa.me/5565992351207", "_blank")}
-                >
-                  (65) 99235-1207
-                </Button>
-                <Button
-                  className="bg-white text-green-600 hover:bg-green-50 font-bold text-xs"
-                  onClick={() => window.open("https://wa.me/5565992048814", "_blank")}
-                >
-                  (65) 99204-8814
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Agendamentos e Visitas */}
-          <Card className="overflow-hidden hover:shadow-xl transition-all duration-300 hover:scale-[1.02] bg-gradient-to-r from-gray-500 to-gray-600 text-white">
-            <CardContent className="p-0">
-              <div className="flex items-center">
-                <div className="flex-1 p-6">
-                  <h3 className="text-xl font-bold mb-2">Agendamentos</h3>
-                  <h3 className="text-xl font-bold mb-3">e Reservas</h3>
-                  <p className="text-sm text-gray-100 mb-4">Agende sua viagem com facilidade</p>
-                  <Button
-                    className="bg-white text-gray-600 hover:bg-gray-50 font-bold"
-                    onClick={() =>
-                      window.open(
-                        "https://wa.me/5564993197555?text=Olá! Quero agendar minha viagem para Caldas Novas!",
-                        "_blank",
-                      )
-                    }
-                  >
-                    Agendar Agora
-                  </Button>
-                </div>
-                <div className="w-32 h-32 bg-white/20 rounded-l-full flex items-center justify-center mr-4">
-                  <div className="w-20 h-20 bg-white rounded-full flex items-center justify-center">
-                    <Calendar className="w-8 h-8 text-gray-600" />
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Informações Adicionais */}
-          <Card className="bg-white/95 backdrop-blur-sm">
-            <CardContent className="p-6">
-              <h3 className="font-bold text-lg mb-4 text-center text-gray-800">📍 Nossas Unidades</h3>
-
-              <div className="space-y-4 text-sm text-gray-700">
-                <div className="flex items-start gap-3">
-                  <MapPin className="w-5 h-5 text-blue-600 mt-1" />
-                  <div>
-                    <p className="font-semibold">Sede Caldas Novas:</p>
-                    <p>Rua RP5, Residencial Primavera 2</p>
-                    <p>Caldas Novas, Goiás</p>
-                  </div>
-                </div>
-
-                <div className="flex items-start gap-3">
-                  <MapPin className="w-5 h-5 text-blue-600 mt-1" />
-                  <div>
-                    <p className="font-semibold">Filial Cuiabá:</p>
-                    <p>Av. Manoel José de Arruda, Porto</p>
-                    <p>Cuiabá, Mato Grosso</p>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-3">
-                  <Mail className="w-5 h-5 text-blue-600" />
-                  <div>
-                    <p className="font-semibold">E-mail:</p>
-                    <a href="mailto:reservas@reserveiviagens.com.br" className="text-blue-600 hover:underline">
-                      reservas@reserveiviagens.com.br
-                    </a>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-3">
-                  <Phone className="w-5 h-5 text-blue-600" />
-                  <div>
-                    <p className="font-semibold">Telefone:</p>
-                    <a href="tel:+556521270415" className="text-blue-600 hover:underline">
-                      (65) 2127-0415
-                    </a>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-3">
-                  <Clock className="w-5 h-5 text-blue-600" />
-                  <div>
-                    <p className="font-semibold">Horário de Atendimento:</p>
-                    <p>Segunda a Sexta: 8h às 18h</p>
-                    <p>Sábado: 8h às 12h</p>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Redes Sociais */}
-          <Card className="bg-white/95 backdrop-blur-sm">
-            <CardContent className="p-6 text-center">
-              <h3 className="font-bold text-lg mb-4 text-gray-800">🌐 Siga-nos nas Redes</h3>
-
-              <div className="flex justify-center gap-4">
-                <Button
-                  className="bg-blue-600 hover:bg-blue-700 text-white rounded-full w-12 h-12"
-                  onClick={() => window.open("https://www.facebook.com/comercialreservei", "_blank")}
-                >
-                  📘
-                </Button>
-                <Button
-                  className="bg-pink-500 hover:bg-pink-600 text-white rounded-full w-12 h-12"
-                  onClick={() => window.open("https://www.instagram.com/reserveiviagens", "_blank")}
-                >
-                  📸
-                </Button>
-                <Button
-                  className="bg-gray-600 hover:bg-gray-700 text-white rounded-full w-12 h-12"
-                  onClick={() => window.open("https://www.reserveiviagens.com.br", "_blank")}
-                >
-                  🌐
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Back Button */}
-          <div className="flex justify-center pt-6 pb-20">
-            <Link href="/">
-              <Button
-                variant="outline"
-                className="text-white hover:text-purple-600 border-white hover:border-purple-300 hover:bg-white"
-              >
-                <ArrowLeft className="w-4 h-4 mr-2" />
-                Voltar ao Início
-              </Button>
-            </Link>
+    <div className="max-w-md mx-auto bg-gray-50 min-h-screen">
+      {/* Header */}
+      <header className="bg-gradient-to-br from-blue-600 to-blue-800 text-white p-6 rounded-b-3xl shadow-lg">
+        <div className="flex items-center gap-3 mb-4">
+          <Link href="/">
+            <Button variant="ghost" size="sm" className="text-white hover:bg-white/20 p-2">
+              <ArrowLeft className="w-5 h-5" />
+            </Button>
+          </Link>
+          <div className="flex items-center gap-3">
+            <Image
+              src="/logo-reservei.png"
+              alt="Reservei Viagens"
+              width={32}
+              height={32}
+              className="rounded-full bg-white/20 p-1"
+            />
+            <h1 className="text-xl font-bold">Entre em Contato</h1>
           </div>
         </div>
+        <p className="text-blue-100 text-sm">Estamos aqui para ajudar você a planejar a viagem dos seus sonhos!</p>
+      </header>
+
+      <div className="p-6 space-y-6 pb-24">
+        {/* Professional Services Section */}
+        <div className="space-y-4">
+          {/* Consultoria de Turismo Imobiliária - Destaque especial */}
+          <Card className="bg-gradient-to-r from-blue-600 to-purple-600 text-white overflow-hidden border-4 border-yellow-400 shadow-2xl">
+            <CardContent className="p-8">
+              <div className="text-center mb-6">
+                <div className="w-20 h-20 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Home className="w-12 h-12 text-white" />
+                </div>
+                <h2 className="text-2xl font-bold mb-3">Consultoria de Turismo Imobiliário</h2>
+                <p className="text-blue-100 mb-6 leading-relaxed">
+                  Bem-vindo! Você chegou até nossa consultoria especializada. Oferecemos assessoria completa em
+                  investimentos, oportunidades de negócios, análise de mercado e somos especialistas em férias em Caldas
+                  Novas.
+                </p>
+                <div className="bg-yellow-400 text-blue-800 p-4 rounded-lg mb-6">
+                  <p className="font-bold text-sm">🎯 CONSULTORIA GRATUITA</p>
+                  <p className="text-xs">Nossa primeira consulta é sempre gratuita!</p>
+                </div>
+
+                <Button
+                  onClick={() => setShowConsultoriaPopup(true)}
+                  className="bg-white text-blue-600 hover:bg-blue-50 font-bold text-base px-6 py-3 rounded-full shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-105"
+                >
+                  🏢 Falar com Consultor Especialista
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Catálogo de Hotéis */}
+          <Card className="bg-gradient-to-r from-orange-500 to-red-500 text-white overflow-hidden">
+            <CardContent className="p-6">
+              <div className="flex items-center gap-4">
+                <div className="w-20 h-20 bg-white/20 rounded-full flex items-center justify-center">
+                  <FileText className="w-10 h-10 text-white" />
+                </div>
+                <div className="flex-1">
+                  <h3 className="text-lg font-bold mb-2">Catálogo de Hotéis</h3>
+                  <p className="text-sm text-orange-100 mb-4">Explore nossa seleção completa de hotéis e resorts</p>
+                  <Link href="/hoteis">
+                    <Button className="bg-white text-orange-600 hover:bg-orange-50 font-semibold">Ver Catálogo</Button>
+                  </Link>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Realizar Cotação */}
+          <Card className="bg-gradient-to-r from-green-500 to-emerald-500 text-white overflow-hidden">
+            <CardContent className="p-6">
+              <div className="flex items-center gap-4">
+                <div className="flex-1">
+                  <h3 className="text-lg font-bold mb-2">Realizar Cotação</h3>
+                  <p className="text-sm text-green-100 mb-4">Entre em contato conosco para cotações personalizadas</p>
+                  <a
+                    href="https://wa.me/5564993197555?text=Olá! Gostaria de realizar uma cotação para minha viagem."
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    <Button className="bg-white text-green-600 hover:bg-green-50 font-semibold flex items-center gap-2">
+                      <MessageCircle className="w-4 h-4" />
+                      WhatsApp
+                    </Button>
+                  </a>
+                </div>
+                <div className="w-20 h-20 bg-white/20 rounded-full flex items-center justify-center">
+                  <Calculator className="w-10 h-10 text-white" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Cotação Rápida */}
+          <Card className="bg-gradient-to-r from-purple-500 to-pink-500 text-white overflow-hidden">
+            <CardContent className="p-6">
+              <div className="flex items-center gap-4">
+                <div className="w-20 h-20 bg-white/20 rounded-full flex items-center justify-center">
+                  <Calendar className="w-10 h-10 text-white" />
+                </div>
+                <div className="flex-1">
+                  <h3 className="text-lg font-bold mb-2">Cotação Rápida</h3>
+                  <p className="text-sm text-purple-100 mb-4">Receba orçamentos rápidos e personalizados</p>
+                  <Button
+                    onClick={handleSolicitarCotacao}
+                    className="bg-white text-purple-600 hover:bg-purple-50 font-semibold"
+                  >
+                    Solicitar Cotação
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Contact Form */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-blue-600">
+              <Send className="w-5 h-5" />
+              Envie sua Mensagem
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div>
+                <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
+                  Nome Completo *
+                </label>
+                <Input
+                  id="name"
+                  name="name"
+                  type="text"
+                  required
+                  value={formData.name}
+                  onChange={handleInputChange}
+                  placeholder="Seu nome completo"
+                  className="w-full"
+                />
+              </div>
+
+              <div>
+                <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
+                  E-mail *
+                </label>
+                <Input
+                  id="email"
+                  name="email"
+                  type="email"
+                  required
+                  value={formData.email}
+                  onChange={handleInputChange}
+                  placeholder="seu@email.com"
+                  className="w-full"
+                />
+              </div>
+
+              <div>
+                <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-1">
+                  Telefone/WhatsApp *
+                </label>
+                <Input
+                  id="phone"
+                  name="phone"
+                  type="tel"
+                  required
+                  value={formData.phone}
+                  onChange={handleInputChange}
+                  placeholder="(00) 00000-0000"
+                  className="w-full"
+                />
+              </div>
+
+              <div>
+                <label htmlFor="message" className="block text-sm font-medium text-gray-700 mb-1">
+                  Mensagem *
+                </label>
+                <Textarea
+                  id="message"
+                  name="message"
+                  required
+                  value={formData.message}
+                  onChange={handleInputChange}
+                  placeholder="Conte-nos sobre sua viagem dos sonhos..."
+                  rows={4}
+                  className="w-full"
+                />
+              </div>
+
+              <Button type="submit" className="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-3">
+                <MessageCircle className="w-5 h-5 mr-2" />
+                Enviar via WhatsApp
+              </Button>
+            </form>
+          </CardContent>
+        </Card>
+
+        {/* Contact Information */}
+        <div className="grid gap-4">
+          {/* Email */}
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex items-center gap-3 mb-3">
+                <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                  <Mail className="w-5 h-5 text-blue-600" />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-gray-800">E-mail</h3>
+                  <p className="text-sm text-gray-600">Resposta em até 24h</p>
+                </div>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-sm">reservas@reserveiviagens.com.br</span>
+                <a href="mailto:reservas@reserveiviagens.com.br">
+                  <Button size="sm" variant="outline">
+                    Enviar
+                  </Button>
+                </a>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Business Hours */}
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex items-center gap-3 mb-3">
+                <div className="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center">
+                  <Clock className="w-5 h-5 text-orange-600" />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-gray-800">Horário de Atendimento</h3>
+                  <p className="text-sm text-gray-600">Estamos sempre disponíveis</p>
+                </div>
+              </div>
+              <div className="space-y-2 text-sm text-gray-600">
+                <div className="flex justify-between">
+                  <span>Segunda a Sexta:</span>
+                  <span>8h às 18h</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Sábados:</span>
+                  <span>8h às 14h</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>WhatsApp:</span>
+                  <span className="text-green-600 font-medium">24h por dia</span>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Addresses */}
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex items-center gap-3 mb-3">
+                <div className="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center">
+                  <MapPin className="w-5 h-5 text-red-600" />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-gray-800">Nossos Endereços</h3>
+                  <p className="text-sm text-gray-600">Visite-nos pessoalmente</p>
+                </div>
+              </div>
+              <div className="space-y-4 text-sm">
+                <div>
+                  <p className="font-medium text-gray-800">Sede Caldas Novas:</p>
+                  <p className="text-gray-600">Rua RP5, Residencial Primavera 2</p>
+                  <p className="text-gray-600">Caldas Novas, Goiás</p>
+                </div>
+                <div>
+                  <p className="font-medium text-gray-800">Filial Cuiabá:</p>
+                  <p className="text-gray-600">Av. Manoel José de Arruda, Porto</p>
+                  <p className="text-gray-600">Cuiabá, Mato Grosso</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Social Media */}
+        <Card>
+          <CardContent className="p-4">
+            <h3 className="font-semibold text-gray-800 mb-4 text-center">Siga-nos nas Redes Sociais</h3>
+            <div className="flex justify-center gap-6">
+              <a
+                href="https://www.facebook.com/comercialreservei"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex flex-col items-center gap-2 text-blue-600 hover:text-blue-800 transition-colors"
+              >
+                <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center overflow-hidden">
+                  <Image
+                    src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/design-de-logotipo-de-midia-social_23-2151296987-hS3ON3d4MIjczKSk4yyVxmsszhPhdA.avif"
+                    alt="Facebook"
+                    width={24}
+                    height={24}
+                    className="object-contain"
+                  />
+                </div>
+                <span className="text-xs font-medium">Facebook</span>
+              </a>
+              <a
+                href="https://www.instagram.com/reserveiviagens"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex flex-col items-center gap-2 text-pink-600 hover:text-pink-800 transition-colors"
+              >
+                <div className="w-12 h-12 bg-pink-100 rounded-full flex items-center justify-center overflow-hidden">
+                  <Image
+                    src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/logotipo-da-aplicacao-instagram_23-2151544088-QGKd21dzz8587aJH9jwFVuzReiHv47.avif"
+                    alt="Instagram"
+                    width={24}
+                    height={24}
+                    className="object-contain"
+                  />
+                </div>
+                <span className="text-xs font-medium">Instagram</span>
+              </a>
+              <a
+                href="https://www.reserveiviagens.com.br"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex flex-col items-center gap-2 text-gray-600 hover:text-gray-800 transition-colors"
+              >
+                <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center overflow-hidden">
+                  <Image
+                    src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/gradient-world-wide-web-internet_78370-4896-SCszINpbMPiQDxTwumaDOWSsneOD6a.avif"
+                    alt="Website"
+                    width={24}
+                    height={24}
+                    className="object-contain"
+                  />
+                </div>
+                <span className="text-xs font-medium">Website</span>
+              </a>
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
-      {/* WhatsApp Float Button */}
-      <a
-        href="https://wa.me/5564993197555?text=Olá! Gostaria de mais informações sobre as ofertas da Reservei Viagens."
-        target="_blank"
-        rel="noopener noreferrer"
-        className="fixed bottom-20 right-4 w-14 h-14 bg-green-500 hover:bg-green-600 rounded-full flex items-center justify-center shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-110 z-50 animate-pulse"
-      >
-        <Phone className="w-7 h-7 text-white" />
-      </a>
+      {/* Consultoria Popup */}
+      <ConsultoriaPopup isOpen={showConsultoriaPopup} onClose={() => setShowConsultoriaPopup(false)} />
+
+      {/* Chat Agent */}
+      <ChatAgent />
+
+      {/* Bottom Navigation */}
+      <nav className="fixed bottom-0 left-1/2 transform -translate-x-1/2 w-full max-w-md bg-white/95 backdrop-blur-sm border-t shadow-lg">
+        <div className="flex justify-around py-2">
+          {[
+            { icon: "🏠", label: "Início", href: "/" },
+            { icon: "🏨", label: "Hotéis", href: "/hoteis" },
+            { icon: "🏷️", label: "Promoções", href: "/promocoes" },
+            { icon: "📞", label: "Contato", href: "/contato", active: true },
+          ].map((item, index) => (
+            <Link key={index} href={item.href}>
+              <button
+                className={`flex flex-col items-center py-2 px-4 rounded-lg transition-all duration-200 ${
+                  item.active ? "text-blue-600 bg-blue-50" : "text-gray-500 hover:text-blue-600 hover:bg-blue-50"
+                }`}
+              >
+                <span className="text-xl mb-1">{item.icon}</span>
+                <span className="text-xs font-medium">{item.label}</span>
+              </button>
+            </Link>
+          ))}
+        </div>
+      </nav>
     </div>
   )
 }

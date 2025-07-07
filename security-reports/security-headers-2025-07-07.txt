@@ -1,0 +1,14 @@
+HTTP/1.1 200 OK
+X-Frame-Options: DENY
+X-Content-Type-Options: nosniff
+Referrer-Policy: origin-when-cross-origin
+Permissions-Policy: camera=(), microphone=(), geolocation=()
+X-DNS-Prefetch-Control: on
+Strict-Transport-Security: max-age=31536000; includeSubDomains; preload
+Vary: RSC, Next-Router-State-Tree, Next-Router-Prefetch, Next-Router-Segment-Prefetch, Accept-Encoding
+Cache-Control: no-store, must-revalidate
+Content-Type: text/html; charset=utf-8
+Date: Mon, 07 Jul 2025 18:56:26 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+

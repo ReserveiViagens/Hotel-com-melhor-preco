@@ -7,8 +7,13 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
 
-    if (!N8N_WEBHOOK_URL) {
-      return NextResponse.json({ error: "N8N webhook not configured" }, { status: 500 })
+    if (!N8N_WEBHOOK_URL || 
+        N8N_WEBHOOK_URL === "https://seu-n8n-instance.com/webhook/123" ||
+        N8N_WEBHOOK_URL.includes("seu-n8n-instance.com")) {
+      return NextResponse.json({ 
+        message: "N8N não configurado - usando resposta padrão",
+        response: "Obrigado pelo contato! Nossa equipe entrará em contato em breve."
+      })
     }
 
     const controller = new AbortController()
@@ -34,14 +39,19 @@ export async function POST(request: NextRequest) {
     }
   } catch (error) {
     console.error("N8N API error:", error)
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
+    return NextResponse.json({ 
+      message: "Erro na conexão com N8N - usando resposta padrão",
+      response: "Obrigado pelo contato! Nossa equipe entrará em contato em breve."
+    })
   }
 }
 
 export async function GET() {
   try {
-    if (!N8N_WEBHOOK_URL) {
-      return NextResponse.json({ status: "disconnected" })
+    if (!N8N_WEBHOOK_URL || 
+        N8N_WEBHOOK_URL === "https://seu-n8n-instance.com/webhook/123" ||
+        N8N_WEBHOOK_URL.includes("seu-n8n-instance.com")) {
+      return NextResponse.json({ status: "not_configured" })
     }
 
     const controller = new AbortController()
